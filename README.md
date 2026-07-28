@@ -9,15 +9,3 @@
 
 技术栈:纯 Node.js + Express,前端为单个静态 HTML 文件,数据落地为本地 JSON 文件。
 不依赖任何需要编译的原生模块,几乎可以部署到任何支持 Node 的环境。
-
-## 目录结构
-
-```
-telegram-notes/
-├── server.js         # 后端 API + 静态文件服务
-├── package.json
-├── Dockerfile
-├── public/
-│   └── index.html    # 前端页面(首页 / 笔记编辑器 / 反馈区)
-└── data/              # 运行时自动生成,存放笔记和反馈数据
-```
