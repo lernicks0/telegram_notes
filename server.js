@@ -153,6 +153,25 @@ app.put('/api/notes/:slug', async (req, res) => {
   res.json({ ok: true, updatedAt: next.updatedAt, hasPassword: next.hasPassword });
 });
 
+// 删除笔记
+app.delete('/api/notes/:slug', (req, res) => {
+  const { slug } = req.params;
+  if (!isValidSlug(slug)) return res.status(400).json({ error: 'INVALID_SLUG' });
+  const { token } = req.body || {};
+
+  const note = notes[slug];
+  if (!note) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  if (note.hasPassword) {
+    if (!verifyToken(slug, token)) return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+
+  delete notes[slug];
+  clearTokens(slug);
+  persistNotes();
+  res.json({ ok: true });
+});
+
 // ---------- 反馈 API ----------
 app.post('/api/feedback', (req, res) => {
   const { name, message } = req.body || {};

@@ -160,7 +160,10 @@
         <div class="telegram-card">
           <div class="perforation"></div>
           <label>笔记代号 · Note ID</label>
-          <input class="slug-input" id="slugInput" placeholder="例如 mynote-2026" autocomplete="off" />
+          <div style="display:flex;gap:8px;">
+            <input class="slug-input" id="slugInput" placeholder="例如 mynote-2026" autocomplete="off" style="flex:1;" />
+            <button style="background:var(--teal);color:#fff;padding:6px 14px;border-radius:2px;font-size:14px;cursor:pointer;border:none;font-family:var(--font-body);display:flex;align-items:center;gap:6px;white-space:nowrap;" id="randomBtn">🎲 随机</button>
+          </div>
           <button class="go-btn" id="goBtn">打开 / 创建</button>
         </div>
         <p class="home-hint">提示:密码仅作为访问门槛,内容并未端到端加密,请勿存放高度敏感信息。</p>
@@ -171,6 +174,13 @@
       const s = slugify(input.value);
       if(!s){ input.focus(); return; }
       nav('#/n/'+encodeURIComponent(s));
+    };
+    document.getElementById('randomBtn').onclick = ()=>{
+      const words = ['memo','idea','note','diary','draft','page','jot','log','vibe','word','ink','stamp','seal','clip','pins','tag','dash','flow','echo','spark'];
+      const w = words[Math.floor(Math.random()*words.length)];
+      const n = Math.random().toString(36).substring(2,5);
+      input.value = w+'-'+n;
+      input.focus();
     };
     document.getElementById('goBtn').onclick = go;
     input.addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
@@ -235,6 +245,7 @@
           <div class="note-actions">
             <button class="icon-btn" id="copyLink">🔗 复制链接</button>
             <button class="icon-btn seal ${state.hasPassword?'':'off'}" id="lockBtn">${state.hasPassword?'🔒 已加密':'🔓 无密码'}</button>
+            <button class="icon-btn seal" id="destroyBtn" style="background:var(--seal);">🗑️ 销毁</button>
           </div>
         </div>
         <div class="paper-page">
@@ -280,6 +291,20 @@
       clearTimeout(saveTimer);
       saveTimer = setTimeout(()=> persist({}), 700);
     });
+
+    document.getElementById('destroyBtn').onclick = async ()=>{
+      if(!confirm('确定要销毁笔记「'+slug+'」吗?此操作不可撤销。')) return;
+      const body = {};
+      if(token) body.token = token;
+      const r = await api('/api/notes/'+encodeURIComponent(slug), { method:'DELETE', body: JSON.stringify(body) });
+      if(r.ok){
+        nav('#/');
+      } else if(r.status===401){
+        alert('无权限删除,请重新解锁笔记后再试');
+      } else {
+        alert('删除失败');
+      }
+    };
 
     document.getElementById('copyLink').onclick = async (e)=>{
       const url = location.origin + '/#/n/' + encodeURIComponent(slug);
