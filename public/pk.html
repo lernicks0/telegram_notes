@@ -381,6 +381,19 @@ body{
         <div id="winContent"></div>
     </div>
 </div>
+<!-- 验证门 -->
+<div id="gateOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+    <div style="background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px 36px;max-width:400px;width:90%;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+        <h2 style="color:#ccd6f6;margin:0 0 6px;font-size:1.3em;">803班 擂台赛</h2>
+        <p style="color:#8892b0;font-size:0.95em;margin-bottom:24px;line-height:1.6;">回答问题即可进入</p>
+        <p style="color:#f5af19;font-size:1.1em;font-weight:bold;margin-bottom:16px;">我们的班主任是谁？</p>
+        <input type="text" id="gateAnswer" placeholder="请输入答案" autocomplete="off" style="width:100%;padding:12px 16px;border:2px solid rgba(255,255,255,0.2);border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-size:1em;font-family:inherit;outline:none;transition:border-color 0.3s;text-align:center;" />
+        <p id="gateError" style="color:#ff5050;font-size:0.85em;margin-top:10px;display:none;">答案不正确，请再想想</p>
+        <button id="gateBtn" style="margin-top:20px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1em;font-weight:bold;cursor:pointer;letter-spacing:1px;transition:all 0.3s;font-family:inherit;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">验证 →</button>
+    </div>
+</div>
+
 <div id="toastContainer"></div>
 <div id="dlgContainer"></div>
 
@@ -395,6 +408,32 @@ var NAMES = [
     "吕家臻","邵子涵","王若霏","王芸旻","王珣苹","王桭玥","王梓诺","闻语歆",
     "吴逸暄","徐悦珂","周芷萱","朱沚昕"
 ];
+
+// ============ 验证门 ============
+var GATE_HASH = '495e75a369b08f9cb3c4dae8f93281136e52f55724d7ab94ae04c4f262a3add5';
+
+async function sha256(str){
+    var buf = new TextEncoder().encode(str);
+    var hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+document.getElementById('gateBtn').onclick = async function(){
+    var input = document.getElementById('gateAnswer');
+    var err = document.getElementById('gateError');
+    var hash = await sha256(input.value.trim());
+    if(hash === GATE_HASH){
+        document.getElementById('gateOverlay').style.display = 'none';
+    } else {
+        err.style.display = 'block';
+        input.value = '';
+        input.focus();
+    }
+};
+document.getElementById('gateAnswer').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') document.getElementById('gateBtn').click();
+});
+document.getElementById('gateAnswer').focus();
 
 var KEY = '803_pk_data_v3';
 var curSelf = null;
