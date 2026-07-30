@@ -427,11 +427,32 @@ async function sha256(str){
     return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+// ============ 记住认证状态 ============
+var GATE_PASSED_KEY = '803_pk_gate_passed';
+var ADMIN_AUTHED_KEY = '803_pk_admin_authed';
+
+// 检查是否已认证
+if(localStorage.getItem(GATE_PASSED_KEY) === '1'){
+    document.getElementById('gateOverlay').style.display = 'none';
+} else {
+    document.getElementById('gateOverlay').style.display = 'flex';
+}
+
+// 恢复管理员状态
+if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
+    setTimeout(function(){
+        // 恢复管理员状态
+        isAdmin = true;
+        document.getElementById('adminStatus').style.display = 'inline';
+    }, 500);
+}
+
 document.getElementById('gateBtn').onclick = async function(){
     var input = document.getElementById('gateAnswer');
     var err = document.getElementById('gateError');
     var hash = await sha256(input.value.trim());
     if(hash === GATE_HASH){
+        localStorage.setItem(GATE_PASSED_KEY, '1');
         document.getElementById('gateOverlay').style.display = 'none';
     } else {
         err.style.display = 'block';
@@ -1252,6 +1273,7 @@ async function applyAdmin(){
         closeDialog();
         isAdmin = true;
         isLocked = false;
+        localStorage.setItem(ADMIN_AUTHED_KEY, '1');
         // 恢复所有操作
         var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, #lockBtn');
         for(var i=0;i<allBtns.length;i++){
