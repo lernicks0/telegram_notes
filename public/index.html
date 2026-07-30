@@ -107,11 +107,128 @@
 </style>
 </head>
 <body>
+
+<!-- 验证门 -->
+<div id="gateOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;">
+    <div style="background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px 36px;max-width:400px;width:90%;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+        <h2 style="color:var(--text-light);margin:0 0 6px;font-size:1.3em;">便签电报</h2>
+        <p style="color:var(--muted);font-size:0.95em;margin-bottom:24px;line-height:1.6;">回答问题即可进入</p>
+        <p style="color:#f5af19;font-size:1.1em;font-weight:bold;margin-bottom:16px;">我们的班主任是谁？</p>
+        <input type="text" id="gateAnswer" placeholder="请输入答案" autocomplete="off" style="width:100%;padding:12px 16px;border:2px solid rgba(255,255,255,0.2);border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-size:1em;font-family:inherit;outline:none;transition:border-color 0.3s;text-align:center;" />
+        <p id="gateError" style="color:var(--seal);font-size:0.85em;margin-top:10px;display:none;">答案不正确，请再想想</p>
+        <button id="gateBtn" style="margin-top:20px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1em;font-weight:bold;cursor:pointer;letter-spacing:1px;transition:all 0.3s;font-family:inherit;">验证 →</button>
+    </div>
+</div>
+
+<!-- 锁定/管理员工具栏 -->
+<div id="lockToolbar" style="position:fixed;bottom:12px;right:14px;z-index:9998;display:flex;gap:6px;align-items:center;">
+    <button id="lockBtn" style="padding:5px 12px;border-radius:16px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--muted);font-size:0.75em;cursor:pointer;font-family:inherit;font-family:var(--font-mono);">🔓 锁定</button>
+    <button id="adminBtn" style="padding:5px 12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#667eea;font-size:0.75em;cursor:pointer;font-family:inherit;display:none;font-family:var(--font-mono);">🔑 管理员</button>
+    <span id="lockStatus" style="font-size:0.7em;color:var(--muted);font-family:var(--font-mono);"></span>
+    <span id="adminStatus" style="font-size:0.7em;color:#2ecc71;display:none;font-family:var(--font-mono);">✅ 管理</span>
+</div>
+
 <div id="app"></div>
 <script>
 (function(){
   const app = document.getElementById('app');
-  const API = ''; // 同源部署;如果前后端分开部署,改成完整的后端地址,例如 'https://api.yourdomain.com'
+  const API = '';
+
+  // ============ 验证门/锁定/管理员 ============
+  var GATE_HASH = '495e75a369b08f9cb3c4dae8f93281136e52f55724d7ab94ae04c4f262a3add5';
+  var LOCK_HASH = 'e23599c762762c9906c147c9c56e42484bf125cdee5837eb5d49b3ae9c2e072e';
+  var ADMIN_HASH = 'f1d5c9e75d4fc18900e439cad1a255960a4b4ae965991d59415bb9aff0a9eb7f';
+  var isLocked = false, isAdmin = false;
+  var GATE_PASSED_KEY = 'tg_gate_passed';
+  var ADMIN_AUTHED_KEY = 'tg_admin_authed';
+
+  async function sha256(str){
+    var buf = new TextEncoder().encode(str);
+    var hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // 门
+  if(localStorage.getItem(GATE_PASSED_KEY) === '1'){
+    document.getElementById('gateOverlay').style.display = 'none';
+  } else {
+    document.getElementById('gateOverlay').style.display = 'flex';
+  }
+  if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
+    setTimeout(function(){ isAdmin = true; document.getElementById('adminStatus').style.display = 'inline'; }, 300);
+  }
+
+  document.getElementById('gateBtn').onclick = async function(){
+    var input = document.getElementById('gateAnswer');
+    var err = document.getElementById('gateError');
+    var hash = await sha256(input.value.trim());
+    if(hash === GATE_HASH){
+      localStorage.setItem(GATE_PASSED_KEY, '1');
+      document.getElementById('gateOverlay').style.display = 'none';
+    } else {
+      err.style.display = 'block'; input.value = ''; input.focus();
+    }
+  };
+  document.getElementById('gateAnswer').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') document.getElementById('gateBtn').click();
+  });
+
+  // 锁定
+  document.getElementById('lockBtn').onclick = function(){
+    var pw = prompt(isLocked ? '输入密码解锁' : '输入密码锁定');
+    if(!pw) return;
+    sha256(pw).then(function(hash){
+      if(hash === LOCK_HASH){
+        isLocked = !isLocked;
+        applyLockUI();
+      } else { alert('密码错误'); }
+    });
+  };
+
+  // 管理员
+  document.getElementById('adminBtn').onclick = function(){
+    var key = prompt('输入管理员密钥');
+    if(!key) return;
+    sha256(key).then(function(hash){
+      if(hash === ADMIN_HASH){
+        isAdmin = true; isLocked = false;
+        localStorage.setItem(ADMIN_AUTHED_KEY, '1');
+        applyLockUI();
+        document.getElementById('adminStatus').style.display = 'inline';
+        document.getElementById('adminBtn').style.display = 'none';
+        alert('管理员模式已激活');
+      } else { alert('密钥错误'); }
+    });
+  };
+
+  function applyLockUI(){
+    var allBtns = document.querySelectorAll('button, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save');
+    var allInputs = document.querySelectorAll('input, textarea, select');
+    if(isLocked && !isAdmin){
+      for(var i=0;i<allBtns.length;i++){
+        if(allBtns[i] && allBtns[i].id !== 'lockBtn' && allBtns[i].id !== 'adminBtn'){
+          allBtns[i].disabled = true; allBtns[i].style.opacity = '0.4'; allBtns[i].style.pointerEvents = 'none';
+        }
+      }
+      for(var j=0;j<allInputs.length;j++){ allInputs[j].disabled = true; }
+      document.getElementById('lockBtn').innerHTML = '🔒 已锁定';
+      document.getElementById('lockStatus').textContent = '⛔ 已锁定';
+      document.getElementById('lockStatus').style.color = '#ff5050';
+      document.getElementById('adminBtn').style.display = 'inline';
+      document.getElementById('adminStatus').style.display = 'none';
+    } else {
+      if(!isAdmin){
+        for(var i=0;i<allBtns.length;i++){
+          if(allBtns[i]){ allBtns[i].disabled = false; allBtns[i].style.opacity = ''; allBtns[i].style.pointerEvents = ''; }
+        }
+        for(var j=0;j<allInputs.length;j++){ allInputs[j].disabled = false; }
+      }
+      document.getElementById('lockBtn').innerHTML = '🔓 锁定';
+      document.getElementById('lockStatus').textContent = '';
+      document.getElementById('adminBtn').style.display = 'none';
+    }
+  } // 同源部署;如果前后端分开部署,改成完整的后端地址,例如 'https://api.yourdomain.com'
 
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
