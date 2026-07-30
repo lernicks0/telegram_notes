@@ -325,34 +325,56 @@
     }
   }
 
+  var PW_STORAGE_KEY = 'tg_note_pw_';
+
+  // 尝试自动解锁（localStorage 存有密码）
+  async function tryAutoUnlock(root, slug){
+    var saved = localStorage.getItem(PW_STORAGE_KEY + slug);
+    if(!saved) return false;
+    var r = await api('/api/notes/'+encodeURIComponent(slug)+'/unlock', {
+      method:'POST', body: JSON.stringify({ password: saved })
+    });
+    if(r.ok && r.data.ok){
+      renderEditor(root, slug, { content: r.data.content, hasPassword:true, token: r.data.token });
+      return true;
+    }
+    return false;
+  }
+
   function renderGate(root, slug){
-    root.innerHTML = `
-      <div class="gate-wrap">
-        <div class="gate-card">
-          <div class="wax-seal">🔒</div>
-          <h3>${escapeHtml(slug)}</h3>
-          <p>这份笔记设有密码,请输入以继续</p>
-          <input type="password" id="pwInput" placeholder="密码" />
-          <p class="gate-error" id="pwErr">密码不正确,请再试一次</p>
-          <button class="go-btn" id="pwGo">解锁</button>
+    // 先尝试自动解锁
+    tryAutoUnlock(root, slug).then(function(ok){
+      if(ok) return;
+      // 自动解锁失败，显示密码输入框
+      root.innerHTML = `
+        <div class="gate-wrap">
+          <div class="gate-card">
+            <div class="wax-seal">🔒</div>
+            <h3>${escapeHtml(slug)}</h3>
+            <p>这份笔记设有密码,请输入以继续</p>
+            <input type="password" id="pwInput" placeholder="密码" />
+            <p class="gate-error" id="pwErr">密码不正确,请再试一次</p>
+            <button class="go-btn" id="pwGo">解锁</button>
+          </div>
         </div>
-      </div>
-    `;
-    const input = document.getElementById('pwInput');
-    const err = document.getElementById('pwErr');
-    const submit = async () => {
-      const r = await api('/api/notes/'+encodeURIComponent(slug)+'/unlock', {
-        method:'POST', body: JSON.stringify({ password: input.value })
-      });
-      if(r.ok && r.data.ok){
-        renderEditor(root, slug, { content: r.data.content, hasPassword:true, token: r.data.token });
-      } else {
-        err.style.display='block'; input.value=''; input.focus();
-      }
-    };
-    document.getElementById('pwGo').onclick = submit;
-    input.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
-    input.focus();
+      `;
+      const input = document.getElementById('pwInput');
+      const err = document.getElementById('pwErr');
+      const submit = async () => {
+        const r = await api('/api/notes/'+encodeURIComponent(slug)+'/unlock', {
+          method:'POST', body: JSON.stringify({ password: input.value })
+        });
+        if(r.ok && r.data.ok){
+          localStorage.setItem(PW_STORAGE_KEY + slug, input.value);
+          renderEditor(root, slug, { content: r.data.content, hasPassword:true, token: r.data.token });
+        } else {
+          err.style.display='block'; input.value=''; input.focus();
+        }
+      };
+      document.getElementById('pwGo').onclick = submit;
+      input.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+      input.focus();
+    });
   }
 
   function renderEditor(root, slug, state){
@@ -441,6 +463,8 @@
       if(!val) return;
       const data = await persist({ setPassword: val });
       if(data){
+        // 保存新密码到本地
+        localStorage.setItem(PW_STORAGE_KEY + slug, val);
         // 设置密码后需要重新获取解锁令牌:直接刷新为已解锁状态
         state.hasPassword = true; state.content = area.value;
         renderEditor(root, slug, state); // 注意:此处 token 会失效,下方逻辑做了处理
@@ -460,9 +484,13 @@
           const r2 = await api('/api/notes/'+encodeURIComponent(slug)+'/unlock', { method:'POST', body: JSON.stringify({ password: val }) });
           state.hasPassword = true;
           state.token = r2.ok ? r2.data.token : null;
+          // 保存新密码
+          localStorage.setItem(PW_STORAGE_KEY + slug, val);
         } else {
           state.hasPassword = false;
           state.token = null;
+          // 移除了密码，清除本地记录
+          localStorage.removeItem(PW_STORAGE_KEY + slug);
         }
         state.content = area.value;
         renderEditor(root, slug, state);
