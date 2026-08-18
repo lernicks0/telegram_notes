@@ -590,6 +590,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
 }
 .btn-save{grid-column:1 / -1;}
 .btn-save:hover,.btn-pri:hover,.btn-pk:hover{box-shadow:0 9px 22px rgba(255,173,61,.16);}
+.btn-save:disabled{
+    background:#1b263a;
+    border-color:var(--border-light);
+    color:#7f8aa3;
+    cursor:not-allowed;
+    box-shadow:none;
+    transform:none;
+}
 .btn-gray{
     background:var(--surface-3);
     border-color:var(--border-light);
@@ -869,7 +877,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
                 </div>
 
                 <div class="actions">
-                    <button class="btn btn-save" onclick="openSaveDialog()">💾 保存本轮记录</button>
+                    <button class="btn btn-save" id="saveExamBtn" onclick="openSaveDialog()" disabled title="只有管理员可以保存本轮记录">🔒 仅管理员可保存</button>
                     <button class="btn btn-gray" onclick="doReset()">重新选择</button>
                     <button class="btn btn-danger" onclick="doClearAll()">清除全部</button>
                 </div>
@@ -964,6 +972,7 @@ if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
         // 恢复管理员状态
         isAdmin = true;
         document.getElementById('adminStatus').style.display = 'inline';
+        updateSavePermissionUI();
     }, 500);
 }
 
@@ -1174,7 +1183,23 @@ function doReset(){
 }
 
 // ============ 保存PK记录（封存） ============
+function updateSavePermissionUI(){
+    var btn = document.getElementById('saveExamBtn');
+    if(!btn) return;
+
+    // 只有管理员，并且页面没有锁定时，才能保存本轮记录。
+    var canSave = isAdmin && !isLocked;
+    btn.disabled = !canSave;
+    btn.innerHTML = canSave ? '💾 保存本轮记录' : '🔒 仅管理员可保存';
+    btn.title = canSave ? '保存本轮PK记录' : '只有管理员可以保存本轮记录';
+}
+
 function openSaveDialog(){
+    if(!isAdmin){
+        toast('只有管理员可以保存本轮记录', 'warn');
+        updateSavePermissionUI();
+        return;
+    }
     if(pkList.length === 0){ toast('当前没有PK记录可以封存', 'warn'); return; }
     var c = document.getElementById('dlgContainer');
     c.innerHTML =
@@ -1196,6 +1221,13 @@ function openSaveDialog(){
 }
 function closeSaveDialog(){ document.getElementById('dlgContainer').innerHTML = ''; }
 function doSaveExam(){
+    // 再检查一次，防止绕过按钮直接调用保存函数。
+    if(!isAdmin){
+        closeSaveDialog();
+        toast('保存失败：需要管理员权限', 'warn');
+        updateSavePermissionUI();
+        return;
+    }
     var inp = document.getElementById('examNameInput');
     var examName = (inp && inp.value.trim()) ? inp.value.trim() : '未命名考试';
     savedExams.push({
@@ -1769,6 +1801,7 @@ function applyLockUI(){
         adminBtn.style.display = 'none';
         document.getElementById('adminStatus').style.display = 'none';
     }
+    updateSavePermissionUI();
 }
 
 function showAdminDialog(){
@@ -1816,6 +1849,7 @@ async function applyAdmin(){
         document.getElementById('lockStatus').textContent = '';
         document.getElementById('adminBtn').style.display = 'none';
         document.getElementById('adminStatus').style.display = 'inline';
+        updateSavePermissionUI();
         toast('✅ 管理员模式已激活', 'ok');
     } else {
         document.getElementById('adminKeyErr').style.display = 'block';
@@ -1823,6 +1857,7 @@ async function applyAdmin(){
 }
 // 先显示空界面
 refreshAll();
+updateSavePermissionUI();
 // 异步加载数据（加载完成后自动 refresh）
 loadData();
 
