@@ -966,6 +966,7 @@ async function sha256(str){
 var GATE_PASSED_KEY = '803_pk_gate_passed';
 var ADMIN_AUTHED_KEY = '803_pk_admin_authed';
 var LOCKED_STATE_KEY = '803_pk_page_locked';
+var LOCK_STATE_URL = '/lock-state.json';
 
 // 检查是否已认证
 if(localStorage.getItem(GATE_PASSED_KEY) === '1'){
@@ -1764,6 +1765,39 @@ function doScorePK(examIdx){
 var ADMIN_HASH = 'f1d5c9e75d4fc18900e439cad1a255960a4b4ae965991d59415bb9aff0a9eb7f';
 var isLocked = localStorage.getItem(LOCKED_STATE_KEY) === '1';
 var isAdmin = false;
+var isSavingLockState = false;
+var isLoadingLockState = false;
+
+async function loadSharedLockState(){
+    if(isSavingLockState || isLoadingLockState) return;
+    isLoadingLockState = true;
+    try{
+        var res = await fetch(LOCK_STATE_URL + '?_t=' + Date.now(), {cache:'no-store'});
+        if(!res.ok) throw new Error('load lock state failed');
+        var data = await res.json();
+        var sharedLocked = data.locked === true;
+        localStorage.setItem(LOCKED_STATE_KEY, sharedLocked ? '1' : '0');
+        if(sharedLocked !== isLocked){
+            isLocked = sharedLocked;
+            applyLockUI();
+        }
+    }catch(e){
+        // 网络断开时继续使用这台设备上一次记住的状态。
+    }finally{
+        isLoadingLockState = false;
+    }
+}
+
+async function saveSharedLockState(nextLocked){
+    var res = await fetch(LOCK_STATE_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({locked:nextLocked})
+    });
+    if(!res.ok) throw new Error('save lock state failed');
+    var data = await res.json();
+    if(!data.ok) throw new Error('save lock state failed');
+}
 
 function updateAdminAuthUI(){
     var adminBtn = document.getElementById('adminBtn');
@@ -1781,7 +1815,11 @@ function updateAdminAuthUI(){
 
 function updateLockPermissionUI(){
     var lockBtn = document.getElementById('lockBtn');
-    if(!isAdmin){
+    if(isSavingLockState){
+        lockBtn.disabled = true;
+        lockBtn.innerHTML = '⏳ 同步中...';
+        lockBtn.title = '正在同步所有设备的锁定状态';
+    } else if(!isAdmin){
         lockBtn.disabled = true;
         lockBtn.innerHTML = '🔒 仅管理员可锁定';
         lockBtn.title = '只有管理员可以锁定页面';
@@ -1802,16 +1840,31 @@ function updateLockPermissionUI(){
     }
 }
 
-function toggleLock(){
+async function toggleLock(){
     if(!isAdmin){
         toast('只有管理员可以锁定页面', 'warn');
         updateLockPermissionUI();
         return;
     }
-    isLocked = !isLocked;
-    localStorage.setItem(LOCKED_STATE_KEY, isLocked ? '1' : '0');
+    if(isSavingLockState) return;
+
+    var previousLocked = isLocked;
+    var nextLocked = !isLocked;
+    isSavingLockState = true;
+    isLocked = nextLocked;
+    localStorage.setItem(LOCKED_STATE_KEY, nextLocked ? '1' : '0');
     applyLockUI();
-    toast(isLocked ? '页面已锁定' : '页面已解除锁定', isLocked ? 'warn' : 'ok');
+    try{
+        await saveSharedLockState(nextLocked);
+        toast(nextLocked ? '所有设备已锁定' : '所有设备已解除锁定', nextLocked ? 'warn' : 'ok');
+    }catch(e){
+        isLocked = previousLocked;
+        localStorage.setItem(LOCKED_STATE_KEY, previousLocked ? '1' : '0');
+        toast('同步失败，锁定状态没有改变', 'warn');
+    }finally{
+        isSavingLockState = false;
+        applyLockUI();
+    }
 }
 
 function applyLockUI(){
@@ -1894,6 +1947,9 @@ refreshAll();
 applyLockUI();
 // 异步加载数据（加载完成后自动 refresh）
 loadData();
+// 立即读取一次服务器状态，之后每 3 秒同步一次其他设备的变化。
+loadSharedLockState();
+setInterval(loadSharedLockState, 3000);
 
 </script>
 </body>
