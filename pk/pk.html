@@ -1821,19 +1821,17 @@ function applyLockUI(){
         lockBtn.style.borderColor = 'rgba(255,255,255,0.15)';
         lockBtn.style.color = '#8892b0';
         status.textContent = '';
-        // 如果没管理员认证，恢复禁用
-        if(!isAdmin){
-            for(var i=0;i<allBtns.length;i++){
-                if(allBtns[i]){
-                    allBtns[i].disabled = false;
-                    allBtns[i].style.pointerEvents = '';
-                    allBtns[i].style.opacity = '';
-                }
+        // 解锁时先恢复全部操作，下面再按管理员权限重新锁定专属按钮。
+        for(var i=0;i<allBtns.length;i++){
+            if(allBtns[i]){
+                allBtns[i].disabled = false;
+                allBtns[i].style.pointerEvents = '';
+                allBtns[i].style.opacity = '';
             }
-            var inputs = document.querySelectorAll('input, textarea, select');
-            for(var j=0;j<inputs.length;j++){
-                inputs[j].disabled = false;
-            }
+        }
+        var inputs = document.querySelectorAll('input, textarea, select');
+        for(var j=0;j<inputs.length;j++){
+            inputs[j].disabled = false;
         }
     }
     updateAdminAuthUI();
