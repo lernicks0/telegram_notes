@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>803班 考试分数擂台赛</title>
+<title>803班 擂台赛</title>
+<link rel="icon" type="image/png" href="logo-803-pk-tech-v3.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
@@ -334,72 +335,573 @@ body{
     flex-shrink:0;
 }
 .btn-export-win:hover{box-shadow:0 4px 15px rgba(46,204,113,0.4);transform:translateY(-1px);}
+
+/* ============ 新版界面 ============ */
+:root{
+    --page:#080d19;
+    --surface:#10192b;
+    --surface-2:#141f34;
+    --surface-3:#19263e;
+    --border:#24324c;
+    --border-light:#31405d;
+    --text:#eef3ff;
+    --muted:#8c98b1;
+    --muted-2:#69758d;
+    --amber:#ffad3d;
+    --amber-soft:rgba(255,173,61,0.12);
+    --blue:#7594ff;
+    --blue-soft:rgba(117,148,255,0.13);
+    --green:#4dd69f;
+    --red:#ff6d7a;
+    --shadow:0 22px 55px rgba(0,0,0,0.28);
+}
+
+html{scroll-behavior:smooth;}
+body{
+    padding:0;
+    background:
+        radial-gradient(circle at 84% -8%,rgba(255,173,61,0.12),transparent 30%),
+        radial-gradient(circle at -5% 28%,rgba(70,105,220,0.12),transparent 32%),
+        var(--page);
+    color:var(--text);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    line-height:1.5;
+}
+
+button,input,textarea{font:inherit;}
+button:focus-visible,input:focus-visible,textarea:focus-visible{
+    outline:3px solid rgba(255,173,61,0.3);
+    outline-offset:2px;
+}
+
+.app-shell{min-height:100vh;padding-bottom:56px;}
+.topbar{
+    max-width:1180px;
+    margin:0 auto;
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    border-bottom:1px solid rgba(49,64,93,0.58);
+}
+.brand-block{display:flex;align-items:center;gap:11px;min-width:0;}
+.brand-mark{
+    width:42px;height:42px;
+    display:block;object-fit:contain;flex:0 0 auto;
+    filter:drop-shadow(0 8px 14px rgba(255,173,61,0.17));
+}
+.brand-name{font-size:0.98em;font-weight:700;letter-spacing:0.5px;}
+.brand-caption{margin-top:1px;color:var(--muted-2);font-size:0.72em;letter-spacing:1px;}
+.security-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+.security-tools button{
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:7px 11px;
+    background:rgba(20,31,52,0.82);
+    color:var(--muted);
+    cursor:pointer;
+    transition:background .2s ease,border-color .2s ease,color .2s ease;
+    font-size:0.78em;
+}
+.security-tools button:hover{background:var(--surface-3);border-color:var(--border-light);color:var(--text);}
+#lockStatus,#adminStatus{font-size:0.74em;color:var(--muted);}
+#adminStatus{color:var(--green)!important;}
+
+.container{max-width:1180px;padding:0 24px;margin:0 auto;}
+.hero-panel{
+    position:relative;
+    overflow:hidden;
+    margin:28px 0 18px;
+    padding:30px 32px;
+    border:1px solid var(--border);
+    border-radius:22px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(320px,.72fr);
+    align-items:center;
+    gap:28px;
+    background:linear-gradient(135deg,rgba(21,32,54,.98),rgba(12,20,36,.98));
+    box-shadow:var(--shadow);
+}
+.hero-panel::after{
+    content:"VS";
+    position:absolute;right:34%;top:50%;
+    transform:translate(50%,-50%);
+    color:rgba(255,255,255,.025);
+    font-size:9em;font-weight:900;line-height:1;
+    pointer-events:none;
+}
+.header{text-align:left;padding:0;position:relative;z-index:1;}
+.hero-kicker,.surface-eyebrow{
+    color:var(--amber);
+    font-size:0.7em;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+.header h1{
+    margin:6px 0 8px;
+    color:var(--text);
+    background:none;
+    -webkit-text-fill-color:currentColor;
+    font-size:2.15em;
+    line-height:1.18;
+    letter-spacing:1px;
+}
+.header .subtitle{max-width:500px;color:var(--muted);font-size:0.9em;letter-spacing:0;}
+.status-bar{
+    position:relative;z-index:1;
+    margin:0;padding:16px 18px;
+    justify-content:flex-start;
+    border:1px solid var(--border-light);
+    border-radius:14px;
+    background:rgba(8,13,25,.52);
+    backdrop-filter:none;
+    gap:11px;
+}
+.status-dot{
+    width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+    background:var(--amber);box-shadow:0 0 0 5px rgba(255,173,61,.11);
+}
+.status-bar .step-indicator{color:var(--muted);font-size:0.9em;}
+.status-bar .step-indicator strong{color:var(--text);}
+.status-divider{width:1px;height:18px;background:var(--border-light);}
+.file-status{margin-left:auto;color:var(--muted-2);font-size:.74em;white-space:nowrap;}
+.status-bar .selected-name{
+    padding:5px 12px;
+    border-radius:8px;
+    background:var(--amber-soft);
+    color:#ffd292;
+    font-size:1em;
+    animation:none;
+}
+
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr);gap:18px;align-items:start;}
+.surface,.saved-section,.win-section,.pk-result-area{
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:rgba(16,25,43,.92);
+    box-shadow:0 16px 38px rgba(0,0,0,.18);
+}
+.surface{padding:22px;}
+.surface-heading{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+    margin-bottom:18px;
+}
+.surface-heading h2{margin-top:3px;color:var(--text);font-size:1.12em;line-height:1.3;}
+.surface-count{
+    padding:5px 9px;border-radius:8px;
+    background:var(--surface-3);color:var(--muted);
+    font-size:0.76em;white-space:nowrap;
+}
+.pk-count{color:var(--amber);}
+.section-title{border:0;padding:0;color:var(--text);font-size:1.05em;}
+
+.name-grid{
+    grid-template-columns:repeat(auto-fill,minmax(86px,1fr));
+    gap:8px;margin:0;
+}
+.name-btn{
+    min-height:41px;
+    padding:8px 6px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:#111b2f;
+    color:#b9c3d8;
+    font-size:0.86em;
+    letter-spacing:0;
+    transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+}
+.name-btn:hover{
+    transform:translateY(-1px);
+    background:var(--surface-3);
+    border-color:var(--border-light);
+    color:var(--text);
+    box-shadow:none;
+}
+.name-btn.sel{
+    background:var(--amber)!important;
+    border-color:var(--amber)!important;
+    color:#211400!important;
+    box-shadow:0 8px 18px rgba(255,173,61,.17);
+}
+.name-btn.done{opacity:.34;border-style:solid;}
+.name-btn.done::after{right:6px;top:3px;color:var(--green);}
+
+.match-surface{position:sticky;top:16px;}
+.pk-result-area{
+    margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;
+}
+.pk-list{display:grid;gap:8px;}
+.pk-item{
+    width:100%;min-height:48px;
+    justify-content:center;
+    padding:11px 12px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:#111b2f;
+    font-size:0.88em;
+}
+.pk-self{color:#c9d5ff;}
+.pk-vs{
+    min-width:30px;padding:3px 6px;border-radius:6px;
+    background:var(--amber-soft);color:#ffc773;text-align:center;
+}
+.pk-opp{color:#ffd292;}
+.pk-del,.saved-del{
+    margin-left:auto;
+    border-color:rgba(255,109,122,.3);
+    background:rgba(255,109,122,.1);
+    color:var(--red);
+}
+.pk-del:hover,.saved-del:hover{transform:none;background:rgba(255,109,122,.2);border-color:rgba(255,109,122,.5);}
+.empty-state{
+    padding:36px 12px;
+    border:1px dashed var(--border);
+    border-radius:12px;
+    color:var(--muted-2);
+    font-size:0.88em;
+    line-height:1.7;
+}
+.empty-state small{color:#59647a;}
+
+.actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:16px;
+}
+.btn{
+    min-height:41px;
+    padding:9px 15px;
+    border:1px solid transparent;
+    border-radius:10px;
+    font-size:0.84em;
+    font-weight:700;
+    letter-spacing:0;
+    transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn-save,.btn-pri,.btn-pk{
+    background:var(--amber);
+    border-color:var(--amber);
+    color:#211400;
+    box-shadow:none;
+}
+.btn-save{grid-column:1 / -1;}
+.btn-save:hover,.btn-pri:hover,.btn-pk:hover{box-shadow:0 9px 22px rgba(255,173,61,.16);}
+.btn-gray{
+    background:var(--surface-3);
+    border-color:var(--border-light);
+    color:#b6c0d5;
+    font-weight:600;
+}
+.btn-gray:hover{background:#202e48;}
+.btn-danger{
+    background:rgba(255,109,122,.08);
+    border:1px solid rgba(255,109,122,.25);
+    color:#ff8b96;
+}
+.btn-danger:hover{background:rgba(255,109,122,.15);border-color:rgba(255,109,122,.4);color:#ffadb5;box-shadow:none;}
+
+.saved-section,.win-section{margin-top:18px;padding:22px;}
+.saved-section{border-color:var(--border);}
+.saved-list{gap:8px;}
+.saved-exam-block{
+    margin-bottom:18px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--border);
+}
+.saved-exam-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:0;}
+.saved-exam-head{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap;}
+.saved-exam-time{color:var(--muted-2);font-size:.76em;}
+.saved-exam-count{color:#9eaff0;font-size:.78em;}
+.saved-score-list{margin-top:7px;}
+.saved-item{
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:#111b2f;
+    color:var(--muted);
+}
+.saved-self{color:#c9d5ff;font-weight:700;}
+.saved-vs{color:var(--muted-2);font-size:.78em;}
+.saved-opp{color:#ffd292;font-weight:700;}
+.saved-section .pk-item.win{background:rgba(77,214,159,.08);border-color:rgba(77,214,159,.24);}
+.saved-section .pk-item.lose{background:rgba(255,109,122,.07);border-color:rgba(255,109,122,.2);}
+.exam-name-badge,.win-exam-header .badge{
+    border-radius:8px;
+    background:var(--blue-soft);
+    color:#b9c8ff;
+    font-size:0.82em;
+}
+.btn-pk{border-radius:9px;font-size:0.78em;padding:7px 13px;}
+.win-section{border-color:rgba(77,214,159,.24);background:rgba(15,32,37,.82);}
+.win-section .pk-item.win,.score-result-box .pk-item.win{
+    background:rgba(77,214,159,.08);border-color:rgba(77,214,159,.24);color:var(--green);
+}
+.score-result-box .pk-item.lose{background:rgba(255,109,122,.08);border-color:rgba(255,109,122,.22);color:var(--red);}
+.win-names-row{border-color:rgba(77,214,159,.2);background:rgba(77,214,159,.06);}
+.win-names-label{color:var(--green);}
+.win-names-list .wn{color:#ffd292;}
+.btn-export-win,.btn-import{background:var(--green);color:#071f17;box-shadow:none;}
+
+/* 弹窗也使用同一套风格 */
+.dlg-overlay{
+    background:rgba(3,7,15,.8);
+    backdrop-filter:blur(8px);
+    padding:28px 16px;
+}
+.dlg-box{
+    margin:auto;
+    padding:26px;
+    border:1px solid var(--border-light);
+    border-radius:18px;
+    background:#101a2d;
+    box-shadow:0 28px 70px rgba(0,0,0,.48);
+}
+.dlg-box h3{font-size:1.18em;color:var(--text);}
+.dlg-note{color:var(--muted);}
+.dlg-pk{font-size:1.35em;}
+.dlg-pk .ds{color:#c9d5ff;}
+.dlg-pk .do{color:#ffd292;}
+.dlg-btns{gap:8px;}
+.input-exam-name,
+.score-table input,
+#lockPwInput,
+#adminKeyInput{
+    border:1px solid var(--border-light)!important;
+    border-radius:9px!important;
+    background:#0c1526!important;
+    color:var(--text)!important;
+}
+.input-exam-name:focus,.score-table input:focus,#lockPwInput:focus,#adminKeyInput:focus{
+    border-color:var(--amber)!important;
+    box-shadow:0 0 0 3px rgba(255,173,61,.1)!important;
+}
+.score-dlg{max-width:900px!important;padding:22px!important;}
+.score-table{border-collapse:separate;border-spacing:0;font-size:0.82em;}
+.score-table th,.score-table td{border:0;border-bottom:1px solid var(--border);padding:10px 7px;}
+.score-table th{background:#16233a;color:#b9c4da;}
+.score-table tr:hover td{background:rgba(117,148,255,.035);}
+.score-name-cell{color:#dbe3f5!important;font-weight:700;}
+.row-total{color:var(--green)!important;font-weight:700;}
+.score-result-box{border-color:var(--border);background:#0d1728;}
+.btn-paste{background:var(--blue-soft);border:1px solid rgba(117,148,255,.25);color:#aebfff;}
+.btn-paste:hover{background:rgba(117,148,255,.2);border-color:rgba(117,148,255,.38);}
+.paste-area{border-color:var(--border-light);background:#0c1526;color:var(--text);}
+.paste-area:focus{border-color:var(--amber);}
+
+/* 验证门 */
+.gate-overlay{
+    position:fixed;inset:0;z-index:99999;
+    display:flex;align-items:center;justify-content:center;
+    padding:22px;
+    background:
+        radial-gradient(circle at 76% 12%,rgba(255,173,61,.14),transparent 31%),
+        radial-gradient(circle at 10% 70%,rgba(72,103,206,.14),transparent 34%),
+        #080d19;
+}
+.gate-card{
+    width:min(420px,100%);
+    padding:34px;
+    border:1px solid var(--border-light);
+    border-radius:22px;
+    background:linear-gradient(145deg,#121d31,#0d1628);
+    box-shadow:0 34px 90px rgba(0,0,0,.42);
+    text-align:left;
+}
+.gate-mark{
+    width:82px;height:82px;
+    display:block;object-fit:contain;
+    margin-bottom:20px;
+    filter:drop-shadow(0 13px 22px rgba(255,173,61,.19));
+}
+.gate-kicker{color:var(--amber);font-size:.7em;font-weight:700;letter-spacing:2px;}
+.gate-card h2{margin:6px 0 6px;color:var(--text);font-size:1.55em;}
+.gate-caption{margin-bottom:25px;color:var(--muted);font-size:.86em;}
+.gate-question{margin-bottom:10px;color:#dfe6f6;font-size:.9em;font-weight:700;}
+#gateAnswer{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--border-light);
+    border-radius:10px;
+    background:#0a1323;
+    color:var(--text);
+    font-size:.95em;
+    text-align:left;
+}
+#gateAnswer:focus{border-color:var(--amber);outline:none;box-shadow:0 0 0 3px rgba(255,173,61,.1);}
+#gateAnswer::placeholder{color:#59667f;}
+#gateError{display:none;margin-top:9px;color:var(--red);font-size:.8em;}
+#gateBtn{
+    width:100%;margin-top:16px;padding:12px;
+    border:0;border-radius:10px;
+    background:var(--amber);color:#211400;
+    font-weight:800;cursor:pointer;
+    transition:transform .2s ease,box-shadow .2s ease;
+}
+#gateBtn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(255,173,61,.2);}
+.gate-footnote{margin-top:14px;color:#59657d;font-size:.72em;text-align:center;}
+
+.toast{border-radius:10px;box-shadow:0 16px 35px rgba(0,0,0,.3);}
+.toast.ok{background:#164535;color:#9bf0ca;}
+.toast.warn{background:#493619;color:#ffd18a;}
+.toast.nfo{background:#17243a;color:#c7d1e5;}
+
+@media(max-width:900px){
+    .hero-panel{grid-template-columns:1fr;gap:20px;}
+    .hero-panel::after{right:6%;top:22%;font-size:7em;}
+    .dashboard-grid{grid-template-columns:1fr;}
+    .match-surface{position:static;}
+    .name-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
+}
+
+@media(max-width:620px){
+    .app-shell{padding-bottom:28px;}
+    .topbar{padding:13px 14px;align-items:flex-start;}
+    .brand-caption{display:none;}
+    .brand-mark{width:36px;height:36px;}
+    .security-tools{gap:6px;}
+    .security-tools button{padding:6px 8px;font-size:.7em;}
+    #lockStatus,#adminStatus{width:100%;text-align:right;}
+    .container{padding:0 12px;}
+    .hero-panel{margin:14px 0 12px;padding:22px 18px;border-radius:17px;}
+    .header h1{font-size:1.62em;}
+    .header .subtitle{font-size:.82em;}
+    .status-bar{padding:13px 14px;}
+    .status-divider{display:none;}
+    .file-status{width:100%;margin-left:20px;}
+    .surface,.saved-section,.win-section{padding:16px;border-radius:15px;}
+    .dashboard-grid{gap:12px;}
+    .name-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+    .name-btn{min-height:39px;padding:7px 2px;font-size:.77em;}
+    .pk-item{font-size:.8em;padding:10px 8px;}
+    .actions{grid-template-columns:1fr;}
+    .btn-save{grid-column:auto;}
+    .gate-card{padding:26px 22px;border-radius:18px;}
+    .dlg-box{padding:20px 16px;width:100%;}
+    .dlg-btns{flex-wrap:wrap;}
+    .dlg-btns .btn{flex:1;min-width:110px;}
+}
+
+@media(max-width:390px){
+    .brand-name{font-size:.88em;}
+    .security-tools button{font-size:.64em;padding:7px 8px;}
+    .name-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important;}
+}
 </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>⚔️ 803班 考试分数擂台赛 ⚔️</h1>
-        <p class="subtitle">考前对决 · 考后比分 · 谁能笑到最后？</p>
-    </div>
-
-    <div class="status-bar" id="statusBar">
-        <span class="step-indicator" id="stepText">👆 第一步：请选择<strong>你自己</strong>的名字</span>
-    </div>
-
-    <div class="section-title">📋 全班名单（共52人）</div>
-    <div class="name-grid" id="nameGrid"></div>
-
-    <div class="pk-result-area">
-        <div class="section-title">
-            🏆 已确认的PK对决
-            <span style="font-weight:normal;font-size:0.8em;color:#8892b0;">
-                （共 <span class="pk-count" id="pkCount">0</span> 组）
-            </span>
+<div class="app-shell">
+    <header class="topbar">
+        <div class="brand-block">
+            <img class="brand-mark" src="logo-803-pk-tech-v3.png" alt="803 班擂台赛 Logo">
+            <div>
+                <div class="brand-name">803 班擂台赛</div>
+                <div class="brand-caption">用成绩，见真章</div>
+            </div>
         </div>
-        <ul class="pk-list" id="pkList">
-            <li class="empty-state">还没有PK对决，快来发起挑战吧！💪</li>
-        </ul>
-    </div>
 
-    <div class="actions">
-        <button class="btn btn-gray" onclick="doReset()">🔄 重新选择</button>
-        <button class="btn btn-danger" onclick="doClearAll()">🗑️ 清除全部记录</button>
-        <button class="btn btn-save" onclick="openSaveDialog()">💾 保存PK记录</button>
-    </div>
-
-    <div class="saved-section" id="savedSection">
-        <div class="section-title">📦 已封存的PK记录</div>
-        <div id="savedContent">
-            <p class="empty-state">尚未保存任何考试PK记录</p>
+        <!-- 锁定和管理员按钮放在顶部，使用起来更顺手 -->
+        <div class="security-tools">
+            <span id="lockStatus"></span>
+            <span id="adminStatus" style="display:none;">✅ 管理员模式</span>
+            <button id="adminBtn" onclick="showAdminDialog()" style="display:none;">🔑 管理员认证</button>
+            <button id="lockBtn" onclick="showLockDialog()">🔓 锁定页面</button>
         </div>
-    </div>
+    </header>
 
-    <!-- 获胜结果区 -->
-    <div class="win-section" id="winSection" style="display:none;">
-        <div class="section-title">🎉 获胜PK对决</div>
-        <div id="winContent"></div>
-    </div>
-</div>
+    <main class="container">
+        <section class="hero-panel">
+            <div class="header">
+                <p class="hero-kicker">803 CLASS ARENA</p>
+                <h1>考试分数擂台赛</h1>
+                <p class="subtitle">选择对手，记录成绩，用分数决定本场胜负。</p>
+            </div>
 
-<!-- 锁定/管理员工具栏 -->
-<div style="max-width:1100px;margin:8px auto 0;padding:0 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-    <button id="lockBtn" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#8892b0;font-size:0.8em;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;align-items:center;gap:5px;" onclick="showLockDialog()">🔓 锁定页面</button>
-    <button id="adminBtn" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#667eea;font-size:0.8em;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;align-items:center;gap:5px;display:none;" onclick="showAdminDialog()">🔑 管理员认证</button>
-    <span id="lockStatus" style="font-size:0.78em;color:#8892b0;"></span>
-    <span id="adminStatus" style="font-size:0.78em;color:#2ecc71;display:none;">✅ 管理员模式</span>
+            <div class="status-bar" id="statusBar">
+                <span class="status-dot"></span>
+                <span class="step-indicator" id="stepText">第一步：请选择<strong>你自己</strong>的名字</span>
+                <span class="status-divider"></span>
+                <span class="file-status" id="fileStatus">正在加载数据...</span>
+            </div>
+        </section>
+
+        <div class="dashboard-grid">
+            <section class="surface roster-surface">
+                <div class="surface-heading">
+                    <div>
+                        <span class="surface-eyebrow">参赛名单</span>
+                        <h2>选择选手</h2>
+                    </div>
+                    <span class="surface-count">52 人</span>
+                </div>
+                <div class="name-grid" id="nameGrid"></div>
+            </section>
+
+            <section class="surface match-surface">
+                <div class="pk-result-area">
+                    <div class="surface-heading">
+                        <div>
+                            <span class="surface-eyebrow">本轮赛况</span>
+                            <h2>已确认的对决</h2>
+                        </div>
+                        <span class="surface-count"><span class="pk-count" id="pkCount">0</span> 组</span>
+                    </div>
+                    <ul class="pk-list" id="pkList">
+                        <li class="empty-state">还没有对决<br><small>先在左侧选择自己和对手</small></li>
+                    </ul>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-save" onclick="openSaveDialog()">💾 保存本轮记录</button>
+                    <button class="btn btn-gray" onclick="doReset()">重新选择</button>
+                    <button class="btn btn-danger" onclick="doClearAll()">清除全部</button>
+                </div>
+            </section>
+        </div>
+
+        <section class="saved-section" id="savedSection">
+            <div class="surface-heading">
+                <div>
+                    <span class="surface-eyebrow">比赛档案</span>
+                    <h2>已封存的 PK 记录</h2>
+                </div>
+            </div>
+            <div id="savedContent">
+                <p class="empty-state">尚未保存任何考试 PK 记录</p>
+            </div>
+        </section>
+
+        <!-- 获胜结果区 -->
+        <section class="win-section" id="winSection" style="display:none;">
+            <div class="surface-heading">
+                <div>
+                    <span class="surface-eyebrow">荣耀榜</span>
+                    <h2>获胜 PK 对决</h2>
+                </div>
+            </div>
+            <div id="winContent"></div>
+        </section>
+    </main>
 </div>
 
 <!-- 验证门 -->
-<div id="gateOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-    <div style="background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px 36px;max-width:400px;width:90%;text-align:center;">
-        <div style="font-size:48px;margin-bottom:12px;">🔒</div>
-        <h2 style="color:#ccd6f6;margin:0 0 6px;font-size:1.3em;">803班 擂台赛</h2>
-        <p style="color:#8892b0;font-size:0.95em;margin-bottom:24px;line-height:1.6;">回答问题即可进入</p>
-        <p style="color:#f5af19;font-size:1.1em;font-weight:bold;margin-bottom:16px;">我们班班长是谁？</p>
-        <input type="text" id="gateAnswer" placeholder="请输入答案" autocomplete="off" style="width:100%;padding:12px 16px;border:2px solid rgba(255,255,255,0.2);border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-size:1em;font-family:inherit;outline:none;transition:border-color 0.3s;text-align:center;" />
-        <p id="gateError" style="color:#ff5050;font-size:0.85em;margin-top:10px;display:none;">答案不正确，请再想想</p>
-        <button id="gateBtn" style="margin-top:20px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1em;font-weight:bold;cursor:pointer;letter-spacing:1px;transition:all 0.3s;font-family:inherit;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">验证 →</button>
+<div id="gateOverlay" class="gate-overlay">
+    <div class="gate-card">
+        <img class="gate-mark" src="logo-803-pk-tech-v3.png" alt="803 班擂台赛 Logo">
+        <p class="gate-kicker">803 CLASS ARENA</p>
+        <h2>进入班级擂台</h2>
+        <p class="gate-caption">回答班级问题后进入比赛页面</p>
+        <div class="gate-question">我们班班长是谁？</div>
+        <input type="text" id="gateAnswer" placeholder="请输入答案" autocomplete="off" />
+        <p id="gateError">答案不正确，请再想想</p>
+        <button id="gateBtn">进入擂台 →</button>
+        <p class="gate-footnote">仅限 803 班内部使用</p>
     </div>
 </div>
 
@@ -706,18 +1208,18 @@ function renderSaved(){
     var h = '';
     for(var i=0;i<savedExams.length;i++){
         var exam = savedExams[i];
-        h += '<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">'+
-            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">'+
+        h += '<div class="saved-exam-block">'+
+            '<div class="saved-exam-head">'+
                 '<span class="exam-name-badge">📝 '+exam.name+'</span>'+
-                '<span style="color:#8892b0;font-size:0.8em;">'+exam.time+'</span>'+
-                '<span style="color:#667eea;font-size:0.82em;">（'+exam.records.length+'组对决）</span>'+
+                '<span class="saved-exam-time">'+exam.time+'</span>'+
+                '<span class="saved-exam-count">'+exam.records.length+' 组对决</span>'+
                 '<button class="btn-pk" onclick="openScoreDialog('+i+')">⚔️ 开始PK</button>'+
                 '<button class="saved-del" onclick="delSavedExam('+i+')" title="删除此封存记录">✕</button>'+
             '</div>';
 
         // 如果已经有成绩结果，显示颜色标记
         if(exam.scoreResults){
-            h += '<ul class="pk-list" style="margin-top:6px;">';
+            h += '<ul class="pk-list saved-score-list">';
             for(var j=0;j<exam.scoreResults.length;j++){
                 var sr = exam.scoreResults[j];
                 var cls = sr.winner === sr.pk.self ? 'win' : 'lose';
@@ -737,9 +1239,9 @@ function renderSaved(){
                 var r = exam.records[k];
                 h += '<li class="saved-item">'+
                     '<span>⚡</span>'+
-                    '<span style="color:#ffd200;font-weight:bold;">'+r.self+'</span>'+
-                    '<span style="color:#8892b0;font-size:0.8em;">PK</span>'+
-                    '<span style="color:#f5af19;font-weight:bold;">'+r.opponent+'</span>'+
+                    '<span class="saved-self">'+r.self+'</span>'+
+                    '<span class="saved-vs">PK</span>'+
+                    '<span class="saved-opp">'+r.opponent+'</span>'+
                 '</li>';
             }
             h += '</ul>';
@@ -898,11 +1400,11 @@ function openScoreDialog(examIdx){
     for(var n=0;n<involvedNames.length;n++){
         var nm = involvedNames[n];
         bodyRows += '<tr>'+
-            '<td style="font-weight:bold;color:#ffd200;">'+nm+'</td>';
+            '<td class="score-name-cell">'+nm+'</td>';
         for(var s=0;s<SUBJECTS.length;s++){
             bodyRows += '<td><input type="number" class="score-inp" data-name="'+nm+'" data-subj="'+SUBJECTS[s]+'" value="" min="0" placeholder="-" oninput="calcRowTotal(this)"></td>';
         }
-        bodyRows += '<td><span class="row-total" id="total_'+nm.replace(/[^a-zA-Z\u4e00-\u9fa5]/g,'_')+'" style="color:#38ef7d;font-weight:bold;">-</span></td>';
+        bodyRows += '<td><span class="row-total" id="total_'+nm.replace(/[^a-zA-Z\u4e00-\u9fa5]/g,'_')+'">-</span></td>';
         bodyRows += '</tr>';
     }
 
@@ -1311,16 +1813,6 @@ refreshAll();
 // 异步加载数据（加载完成后自动 refresh）
 loadData();
 
-// 添加文件状态栏（在 status-bar 下方显示）
-setTimeout(function(){
-    var container = document.querySelector('.status-bar:last-of-type');
-    if(container){
-        var bar = document.createElement('div');
-        bar.style.cssText = 'text-align:center;padding:10px;color:#8892b0;font-size:0.9em;';
-        bar.innerHTML = '<span id="fileStatus">💾 正在加载数据...</span>';
-        container.parentNode.insertBefore(bar, container.nextSibling);
-    }
-}, 100);
 </script>
 </body>
 </html>
