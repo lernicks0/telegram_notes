@@ -1189,8 +1189,8 @@ function updateSavePermissionUI(){
     var btn = document.getElementById('saveExamBtn');
     if(!btn) return;
 
-    // 只有管理员，并且页面没有锁定时，才能保存本轮记录。
-    var canSave = isAdmin && !isLocked;
+    // 锁定只限制普通用户，管理员始终可以保存本轮记录。
+    var canSave = isAdmin;
     btn.disabled = !canSave;
     btn.innerHTML = canSave ? '💾 保存本轮记录' : '🔒 仅管理员可保存';
     btn.title = canSave ? '保存本轮PK记录' : '只有管理员可以保存本轮记录';
@@ -1198,7 +1198,8 @@ function updateSavePermissionUI(){
 
 function updatePkActionPermissionUI(){
     var buttons = document.querySelectorAll('.btn-pk');
-    var canStartPk = isAdmin && !isLocked;
+    // 锁定只限制普通用户，管理员始终可以开始PK。
+    var canStartPk = isAdmin;
     for(var i=0;i<buttons.length;i++){
         buttons[i].disabled = !canStartPk;
         buttons[i].title = canStartPk ? '开始录入成绩并进行PK' : '只有管理员可以开始PK';
@@ -1436,7 +1437,7 @@ function exportWinNames(examIdx){
 var SUBJECTS = ['语文','数学','英语','科学','文综'];
 
 function openScoreDialog(examIdx){
-    if(!isAdmin || isLocked){
+    if(!isAdmin){
         toast('只有管理员可以开始PK并录入成绩', 'warn');
         updatePkActionPermissionUI();
         return;
@@ -1643,7 +1644,7 @@ function calcRowTotal(inp){
 // 收集分数并执行PK比对
 function doScorePK(examIdx){
     // 再检查一次，防止绕过“开始PK”按钮直接保存成绩。
-    if(!isAdmin || isLocked){
+    if(!isAdmin){
         closeScoreDialog();
         toast('保存成绩失败：需要管理员权限', 'warn');
         updatePkActionPermissionUI();
@@ -1797,7 +1798,7 @@ function applyLockUI(){
     var status = document.getElementById('lockStatus');
     var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, #lockBtn');
     
-    if(isLocked){
+    if(isLocked && !isAdmin){
         status.textContent = '⛔ 页面已锁定';
         status.style.color = '#ff5050';
         // 禁用所有按钮（除了 adminBtn 和 lockBtn）
@@ -1814,8 +1815,9 @@ function applyLockUI(){
             inputs[j].disabled = true;
         }
     } else {
-        status.textContent = '';
-        // 解锁时先恢复全部操作，下面再按管理员权限重新锁定专属按钮。
+        status.textContent = isLocked ? '🔒 页面已锁定 · 管理员可操作' : '';
+        status.style.color = isLocked ? '#ffb13b' : '';
+        // 未锁定或当前是管理员时，恢复全部操作。
         for(var i=0;i<allBtns.length;i++){
             if(allBtns[i]){
                 allBtns[i].disabled = false;
@@ -1857,27 +1859,9 @@ async function applyAdmin(){
     if(hash === ADMIN_HASH){
         closeDialog();
         isAdmin = true;
-        isLocked = false;
         localStorage.setItem(ADMIN_AUTHED_KEY, '1');
-        // 恢复所有操作
-        var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, #lockBtn');
-        for(var i=0;i<allBtns.length;i++){
-            if(allBtns[i]){
-                allBtns[i].disabled = false;
-                allBtns[i].style.pointerEvents = '';
-                allBtns[i].style.opacity = '';
-            }
-        }
-        var inputs = document.querySelectorAll('input, textarea, select');
-        for(var j=0;j<inputs.length;j++){
-            inputs[j].disabled = false;
-        }
-        // 更新 UI
-        document.getElementById('lockStatus').textContent = '';
-        updateAdminAuthUI();
-        updateLockPermissionUI();
-        updateSavePermissionUI();
-        updatePkActionPermissionUI();
+        // 保留当前锁定状态，但管理员的全部操作都会恢复。
+        applyLockUI();
         toast('✅ 管理员模式已激活', 'ok');
     } else {
         document.getElementById('adminKeyErr').style.display = 'block';
