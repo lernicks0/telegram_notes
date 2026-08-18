@@ -556,6 +556,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
     color:var(--red);
 }
 .pk-del:hover,.saved-del:hover{transform:none;background:rgba(255,109,122,.2);border-color:rgba(255,109,122,.5);}
+.saved-del:disabled,.saved-del:disabled:hover{
+    cursor:not-allowed;
+    opacity:.38;
+    transform:none;
+    background:rgba(255,109,122,.08);
+    border-color:rgba(255,109,122,.18);
+}
 .empty-state{
     padding:36px 12px;
     border:1px dashed var(--border);
@@ -958,6 +965,7 @@ async function sha256(str){
 // ============ 记住认证状态 ============
 var GATE_PASSED_KEY = '803_pk_gate_passed';
 var ADMIN_AUTHED_KEY = '803_pk_admin_authed';
+var LOCKED_STATE_KEY = '803_pk_page_locked';
 
 // 检查是否已认证
 if(localStorage.getItem(GATE_PASSED_KEY) === '1'){
@@ -971,10 +979,7 @@ if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
     setTimeout(function(){
         // 恢复管理员状态
         isAdmin = true;
-        updateAdminAuthUI();
-        updateLockPermissionUI();
-        updateSavePermissionUI();
-        updatePkActionPermissionUI();
+        applyLockUI();
     }, 500);
 }
 
@@ -1027,6 +1032,7 @@ async function loadData(){
         pkList = data.pkList || [];
         savedExams = data.savedExams || [];
         refreshAll();
+        applyLockUI();
         var el = document.getElementById('fileStatus');
         if(el) el.textContent = '📁 数据已自动加载';
     }catch(e){
@@ -1206,6 +1212,14 @@ function updatePkActionPermissionUI(){
     }
 }
 
+function updateDeletePermissionUI(){
+    var buttons = document.querySelectorAll('.saved-del');
+    for(var i=0;i<buttons.length;i++){
+        buttons[i].disabled = !isAdmin;
+        buttons[i].title = isAdmin ? '删除此封存记录' : '只有管理员可以删除封存记录';
+    }
+}
+
 function openSaveDialog(){
     if(!isAdmin){
         toast('只有管理员可以保存本轮记录', 'warn');
@@ -1271,7 +1285,7 @@ function renderSaved(){
                 '<span class="saved-exam-time">'+exam.time+'</span>'+
                 '<span class="saved-exam-count">'+exam.records.length+' 组对决</span>'+
                 '<button class="btn-pk" onclick="openScoreDialog('+i+')" disabled title="只有管理员可以开始PK">⚔️ 开始PK</button>'+
-                '<button class="saved-del" onclick="delSavedExam('+i+')" title="删除此封存记录">✕</button>'+
+                '<button class="saved-del" onclick="delSavedExam('+i+')" disabled title="只有管理员可以删除封存记录">✕</button>'+
             '</div>';
 
         // 如果已经有成绩结果，显示颜色标记
@@ -1307,6 +1321,7 @@ function renderSaved(){
     }
     content.innerHTML = h;
     updatePkActionPermissionUI();
+    updateDeletePermissionUI();
 
     // 刷新获胜区
     renderWinSection();
@@ -1314,6 +1329,11 @@ function renderSaved(){
 
 // ============ 删除已封存 ============
 function delSavedExam(idx){
+    if(!isAdmin){
+        toast('只有管理员可以删除封存记录', 'warn');
+        updateDeletePermissionUI();
+        return;
+    }
     var exam = savedExams[idx];
     savedExams.splice(idx, 1);
     saveData(); refreshAll();
@@ -1742,7 +1762,7 @@ function doScorePK(examIdx){
 
 // ============ 锁定/管理员 ============
 var ADMIN_HASH = 'f1d5c9e75d4fc18900e439cad1a255960a4b4ae965991d59415bb9aff0a9eb7f';
-var isLocked = false;
+var isLocked = localStorage.getItem(LOCKED_STATE_KEY) === '1';
 var isAdmin = false;
 
 function updateAdminAuthUI(){
@@ -1789,6 +1809,7 @@ function toggleLock(){
         return;
     }
     isLocked = !isLocked;
+    localStorage.setItem(LOCKED_STATE_KEY, isLocked ? '1' : '0');
     applyLockUI();
     toast(isLocked ? '页面已锁定' : '页面已解除锁定', isLocked ? 'warn' : 'ok');
 }
@@ -1796,7 +1817,7 @@ function toggleLock(){
 function applyLockUI(){
     var lockBtn = document.getElementById('lockBtn');
     var status = document.getElementById('lockStatus');
-    var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, #lockBtn');
+    var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, .pk-del, .saved-del, #lockBtn');
     
     if(isLocked && !isAdmin){
         status.textContent = '⛔ 页面已锁定';
@@ -1834,6 +1855,7 @@ function applyLockUI(){
     updateLockPermissionUI();
     updateSavePermissionUI();
     updatePkActionPermissionUI();
+    updateDeletePermissionUI();
 }
 
 function showAdminDialog(){
@@ -1869,10 +1891,7 @@ async function applyAdmin(){
 }
 // 先显示空界面
 refreshAll();
-updateAdminAuthUI();
-updateLockPermissionUI();
-updateSavePermissionUI();
-updatePkActionPermissionUI();
+applyLockUI();
 // 异步加载数据（加载完成后自动 refresh）
 loadData();
 
