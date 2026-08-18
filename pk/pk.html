@@ -829,7 +829,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
         <div class="security-tools">
             <span id="lockStatus"></span>
             <span id="adminStatus" style="display:none;">✅ 管理员模式</span>
-            <button id="adminBtn" onclick="showAdminDialog()" style="display:none;">🔑 管理员认证</button>
+            <button id="adminBtn" onclick="showAdminDialog()">🔑 管理员认证</button>
             <button id="lockBtn" onclick="showLockDialog()">🔓 锁定页面</button>
         </div>
     </header>
@@ -971,7 +971,7 @@ if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
     setTimeout(function(){
         // 恢复管理员状态
         isAdmin = true;
-        document.getElementById('adminStatus').style.display = 'inline';
+        updateAdminAuthUI();
         updateSavePermissionUI();
         updatePkActionPermissionUI();
     }, 500);
@@ -1744,6 +1744,24 @@ var ADMIN_HASH = 'f1d5c9e75d4fc18900e439cad1a255960a4b4ae965991d59415bb9aff0a9eb
 var isLocked = false;
 var isAdmin = false;
 
+function updateAdminAuthUI(){
+    var adminBtn = document.getElementById('adminBtn');
+    var adminStatus = document.getElementById('adminStatus');
+
+    if(isLocked){
+        // 页面锁定时保留认证入口，管理员可以用密钥解锁。
+        adminBtn.style.display = 'flex';
+        adminStatus.style.display = 'none';
+    } else if(isAdmin){
+        adminBtn.style.display = 'none';
+        adminStatus.style.display = 'inline';
+    } else {
+        // 普通状态下认证入口也一直显示，不必先锁定页面。
+        adminBtn.style.display = 'flex';
+        adminStatus.style.display = 'none';
+    }
+}
+
 function showLockDialog(){
     var c = document.getElementById('dlgContainer');
     c.innerHTML =
@@ -1776,7 +1794,6 @@ async function applyLock(){
 
 function applyLockUI(){
     var lockBtn = document.getElementById('lockBtn');
-    var adminBtn = document.getElementById('adminBtn');
     var status = document.getElementById('lockStatus');
     var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, #lockBtn');
     
@@ -1799,9 +1816,6 @@ function applyLockUI(){
         for(var j=0;j<inputs.length;j++){
             inputs[j].disabled = true;
         }
-        // 显示管理员按钮
-        adminBtn.style.display = 'flex';
-        document.getElementById('adminStatus').style.display = 'none';
     } else {
         lockBtn.innerHTML = '🔓 锁定页面';
         lockBtn.style.borderColor = 'rgba(255,255,255,0.15)';
@@ -1821,9 +1835,8 @@ function applyLockUI(){
                 inputs[j].disabled = false;
             }
         }
-        adminBtn.style.display = 'none';
-        document.getElementById('adminStatus').style.display = 'none';
     }
+    updateAdminAuthUI();
     updateSavePermissionUI();
     updatePkActionPermissionUI();
 }
@@ -1871,8 +1884,7 @@ async function applyAdmin(){
         document.getElementById('lockBtn').style.borderColor = 'rgba(255,255,255,0.15)';
         document.getElementById('lockBtn').style.color = '#8892b0';
         document.getElementById('lockStatus').textContent = '';
-        document.getElementById('adminBtn').style.display = 'none';
-        document.getElementById('adminStatus').style.display = 'inline';
+        updateAdminAuthUI();
         updateSavePermissionUI();
         updatePkActionPermissionUI();
         toast('✅ 管理员模式已激活', 'ok');
@@ -1882,6 +1894,7 @@ async function applyAdmin(){
 }
 // 先显示空界面
 refreshAll();
+updateAdminAuthUI();
 updateSavePermissionUI();
 updatePkActionPermissionUI();
 // 异步加载数据（加载完成后自动 refresh）
