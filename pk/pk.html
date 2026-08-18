@@ -743,6 +743,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
 #gateBtn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(255,173,61,.2);}
 .gate-footnote{margin-top:14px;color:#59657d;font-size:.72em;text-align:center;}
 
+/* 页面署名：保持低调，不抢正文内容的注意力 */
+.site-credit{
+    padding:24px 16px 0;
+    color:rgba(154,168,193,.42);
+    font-size:.7em;
+    letter-spacing:1.2px;
+    text-align:center;
+    user-select:none;
+}
+
 .toast{border-radius:10px;box-shadow:0 16px 35px rgba(0,0,0,.3);}
 .toast.ok{background:#164535;color:#9bf0ca;}
 .toast.warn{background:#493619;color:#ffd18a;}
@@ -779,6 +789,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
     .actions{grid-template-columns:1fr;}
     .btn-save{grid-column:auto;}
     .gate-card{padding:26px 22px;border-radius:18px;}
+    .site-credit{padding-top:18px;font-size:.64em;}
     .dlg-box{padding:20px 16px;width:100%;}
     .dlg-btns{flex-wrap:wrap;}
     .dlg-btns .btn{flex:1;min-width:110px;}
@@ -888,6 +899,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
             <div id="winContent"></div>
         </section>
     </main>
+
+    <footer class="site-credit">made by mao &amp; wang</footer>
 </div>
 
 <!-- 验证门 -->
