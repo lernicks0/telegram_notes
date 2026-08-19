@@ -726,10 +726,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
     position:fixed;inset:0;z-index:99999;
     display:flex;align-items:center;justify-content:center;
     padding:22px;
-    background:
-        radial-gradient(circle at 76% 12%,rgba(255,173,61,.14),transparent 31%),
-        radial-gradient(circle at 10% 70%,rgba(72,103,206,.14),transparent 34%),
-        #080d19;
+    background:linear-gradient(135deg,#050a13,#0a1425);
 }
 .gate-card{
     width:min(420px,100%);
@@ -971,6 +968,8 @@ var GATE_HASHES = [
     '7fe3d9ae179a1e211d1a7a226118910b9550dc1f9e7a0930d61f0683376d812e',
     '0dc03415048f864c84a8f95928f3536ed5adb1381b1a73297fa4b490a0ab0d95'
 ];
+// 直接判断这三种答案，避免某些浏览器不能使用加密功能时按钮没有反应。
+var GATE_ANSWERS = ['mao', 'maozixin', '毛梓鑫'];
 
 async function sha256(str){
     var buf = new TextEncoder().encode(str);
@@ -1000,13 +999,12 @@ if(localStorage.getItem(ADMIN_AUTHED_KEY) === '1'){
     }, 500);
 }
 
-document.getElementById('gateBtn').onclick = async function(){
+document.getElementById('gateBtn').onclick = function(){
     var input = document.getElementById('gateAnswer');
     var err = document.getElementById('gateError');
     // 去掉前后空格，并把英文字母变成小写，所以英文答案不区分大小写。
     var answer = input.value.trim().toLowerCase();
-    var hash = await sha256(answer);
-    if(GATE_HASHES.includes(hash)){
+    if(GATE_ANSWERS.indexOf(answer) !== -1){
         localStorage.setItem(GATE_PASSED_KEY, '1');
         document.getElementById('gateOverlay').style.display = 'none';
     } else {
@@ -2021,8 +2019,8 @@ function applyLockUI(){
                 allBtns[i].style.opacity = '0.4';
             }
         }
-        // 禁用输入框
-        var inputs = document.querySelectorAll('input, textarea, select');
+        // 验证门和管理员认证框要一直能输入。
+        var inputs = document.querySelectorAll('input:not(#gateAnswer):not(#adminKeyInput), textarea, select');
         for(var j=0;j<inputs.length;j++){
             inputs[j].disabled = true;
         }
@@ -2037,7 +2035,7 @@ function applyLockUI(){
                 allBtns[i].style.opacity = '';
             }
         }
-        var inputs = document.querySelectorAll('input, textarea, select');
+        var inputs = document.querySelectorAll('input:not(#gateAnswer):not(#adminKeyInput), textarea, select');
         for(var j=0;j<inputs.length;j++){
             inputs[j].disabled = false;
         }
