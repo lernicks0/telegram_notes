@@ -3,8 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" id="themeColor" content="#12203a" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <title>便签电报 · Notes</title>
+<script>
+  // 在页面画出来之前先读取主题，避免打开时闪一下旧颜色。
+  try{
+    var firstTheme = localStorage.getItem('tg_note_theme_v1') === 'tech' ? 'tech' : 'classic';
+    document.documentElement.setAttribute('data-note-theme', firstTheme);
+    document.getElementById('themeColor').content = firstTheme === 'tech' ? '#050b14' : '#12203a';
+  }catch(_){ document.documentElement.setAttribute('data-note-theme', 'classic'); }
+</script>
 <style>
   :root{
     --ink: #12203a;
@@ -36,8 +45,12 @@
   .topnav{width:100%; display:flex; justify-content:space-between; align-items:center; padding:22px 32px; letter-spacing:0.08em; font-size:13px; text-transform:uppercase; color:var(--muted);}
   .topnav .brand{font-family:var(--font-display); color:var(--text-light); font-size:14px; letter-spacing:0.12em;}
   .topnav .brand b{color:#e7b98f;}
+  .topnav nav{display:flex;align-items:center;justify-content:flex-end;}
   .topnav nav a{margin-left:22px; transition:color .15s;}
   .topnav nav a:hover{color:var(--text-light);}
+  .theme-toggle{margin-left:18px;padding:7px 10px;border:1px solid rgba(255,255,255,.13);border-radius:18px;color:var(--text-light);background:rgba(255,255,255,.06);font-size:12px;letter-spacing:.04em;white-space:nowrap;transition:.18s;}
+  .theme-toggle:hover{background:rgba(255,255,255,.13);transform:translateY(-1px);}
+  .theme-to-classic{display:none;}
 
   .home-wrap{flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px 100px;}
   .telegram-title{font-family:var(--font-display); font-size:clamp(28px,5vw,46px); text-align:center; margin:0 0 6px; color:var(--text-light);}
@@ -100,8 +113,78 @@
   .fb-item .body{line-height:1.6; white-space:pre-wrap; word-break:break-word;}
   .fb-empty{color:var(--muted); font-size:13px; text-align:center; padding:20px 0;}
 
+  /* 科技夜航：只改变外观，所有笔记功能仍然使用同一套代码。 */
+  html[data-note-theme="tech"]{
+    --ink:#050b14;
+    --paper:#0d1c2e;
+    --text-dark:#edfaff;
+    --text-light:#f1fbff;
+    --muted:#8ea8b9;
+    --teal:#59e2ff;
+    --teal-dark:#2bb2cf;
+    --seal:#ff7188;
+    --seal-dark:#cb4961;
+  }
+  html[data-note-theme="tech"] body{
+    background:
+      radial-gradient(circle at 14% 0%,rgba(31,131,185,.24),transparent 34%),
+      radial-gradient(circle at 88% 18%,rgba(92,76,210,.18),transparent 32%),
+      var(--ink);
+  }
+  html[data-note-theme="tech"] body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.38;
+    background-image:linear-gradient(rgba(89,226,255,.026) 1px,transparent 1px),linear-gradient(90deg,rgba(89,226,255,.026) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:linear-gradient(#000,transparent 88%);
+  }
+  html[data-note-theme="tech"] #app{position:relative;z-index:1;}
+  html[data-note-theme="tech"] .topnav{border-bottom:1px solid rgba(89,226,255,.1);background:rgba(5,14,25,.52);backdrop-filter:blur(14px);}
+  html[data-note-theme="tech"] .topnav .brand b{color:var(--teal);text-shadow:0 0 22px rgba(89,226,255,.24);}
+  html[data-note-theme="tech"] .theme-to-tech{display:none;}
+  html[data-note-theme="tech"] .theme-to-classic{display:inline;}
+  html[data-note-theme="tech"] .theme-toggle{border-color:rgba(89,226,255,.25);color:var(--teal);background:rgba(89,226,255,.07);}
+  html[data-note-theme="tech"] .telegram-title{letter-spacing:-.035em;text-shadow:0 0 36px rgba(89,226,255,.12);}
+  html[data-note-theme="tech"] .telegram-card,
+  html[data-note-theme="tech"] .paper-page,
+  html[data-note-theme="tech"] .gate-card,
+  html[data-note-theme="tech"] .fb-card{
+    border:1px solid rgba(89,226,255,.2);border-radius:20px;
+    background:linear-gradient(150deg,#10243a,#091525 78%);
+    box-shadow:0 28px 80px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.025);
+  }
+  html[data-note-theme="tech"] .perforation{left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.65;}
+  html[data-note-theme="tech"] .telegram-card label,
+  html[data-note-theme="tech"] .fb-card label,
+  html[data-note-theme="tech"] .gate-card p,
+  html[data-note-theme="tech"] .fb-card p.desc{color:var(--muted);}
+  html[data-note-theme="tech"] .slug-input,
+  html[data-note-theme="tech"] .gate-card input,
+  html[data-note-theme="tech"] .fb-card input[type=text]{color:var(--text-dark);border-color:rgba(89,226,255,.24);}
+  html[data-note-theme="tech"] .slug-input::placeholder,
+  html[data-note-theme="tech"] .gate-card input::placeholder,
+  html[data-note-theme="tech"] .fb-card input::placeholder,
+  html[data-note-theme="tech"] .fb-card textarea::placeholder{color:#5f788a;}
+  html[data-note-theme="tech"] .go-btn{border-radius:10px;color:#04151d;background:linear-gradient(135deg,var(--teal),#79efb9);font-weight:900;box-shadow:0 10px 30px rgba(89,226,255,.13);}
+  html[data-note-theme="tech"] .go-btn:hover{background:linear-gradient(135deg,#86ecff,#9bf5ca);}
+  html[data-note-theme="tech"] #randomBtn{border-radius:9px!important;color:#04151d!important;font-weight:800;background:var(--teal)!important;}
+  html[data-note-theme="tech"] .postmark{border-style:solid;border-color:rgba(89,226,255,.24);color:var(--text-light);background:rgba(12,31,51,.65);}
+  html[data-note-theme="tech"] .icon-btn{border:1px solid rgba(89,226,255,.13);background:rgba(16,42,66,.64);}
+  html[data-note-theme="tech"] .icon-btn:hover{border-color:rgba(89,226,255,.36);background:rgba(24,57,86,.8);}
+  html[data-note-theme="tech"] .icon-btn.seal{border-color:rgba(255,113,136,.35);background:rgba(143,42,62,.5);}
+  html[data-note-theme="tech"] .paper-page textarea{color:var(--text-dark);background-image:linear-gradient(rgba(89,226,255,.035) 1px,transparent 1px);background-size:100% 31.45px;}
+  html[data-note-theme="tech"] .save-status{color:#7192a7;}
+  html[data-note-theme="tech"] .settings-panel{border:1px solid rgba(89,226,255,.14);border-radius:13px;background:rgba(10,27,45,.78);backdrop-filter:blur(14px);}
+  html[data-note-theme="tech"] .settings-panel input[type=text]{border-color:rgba(89,226,255,.2);border-radius:9px;background:#071625;}
+  html[data-note-theme="tech"] .settings-panel button.apply{border-radius:9px;color:#04151d;font-weight:800;}
+  html[data-note-theme="tech"] .wax-seal{border-radius:18px;color:#06151d;background:linear-gradient(145deg,var(--teal),#7a98ff);box-shadow:0 10px 30px rgba(89,226,255,.2);}
+  html[data-note-theme="tech"] .fb-card textarea{color:var(--text-dark);border-color:rgba(89,226,255,.2);border-radius:10px;background:#071625;}
+  html[data-note-theme="tech"] .fb-item{border:1px solid rgba(89,226,255,.12);border-radius:12px;background:rgba(13,35,56,.7);}
+
   @media (max-width:600px){
     .topnav{padding:18px 18px;}
+    .topnav{flex-wrap:wrap;gap:11px;}
+    .topnav nav{width:100%;}
+    .topnav nav a{margin-left:14px;}
+    .theme-toggle{margin-left:12px;}
     .paper-page textarea{padding:28px 20px 24px; font-size:16px;}
   }
 </style>
@@ -114,6 +197,15 @@
   const app = document.getElementById('app');
   const API = '';
   var PW_STORAGE_KEY = 'tg_note_pw_'; // 同源部署;如果前后端分开部署,改成完整的后端地址,例如 'https://api.yourdomain.com'
+  const THEME_STORAGE_KEY = 'tg_note_theme_v1';
+
+  window.toggleNoteTheme = function(){
+    const current = document.documentElement.getAttribute('data-note-theme') || 'classic';
+    const next = current === 'tech' ? 'classic' : 'tech';
+    document.documentElement.setAttribute('data-note-theme', next);
+    document.getElementById('themeColor').content = next === 'tech' ? '#050b14' : '#12203a';
+    try{ localStorage.setItem(THEME_STORAGE_KEY, next); }catch(_){}
+  };
 
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -149,6 +241,7 @@
           <a href="https://lernicks.cn">主站</a>
           <a href="#/" style="${active==='home'?'color:#eee6d3':''}">首页</a>
           <a href="#/feedback" style="${active==='fb'?'color:#eee6d3':''}">问题反馈</a>
+          <button class="theme-toggle" onclick="toggleNoteTheme()" title="切换网站主题" aria-label="切换网站主题"><span class="theme-to-tech">⌁ 科技</span><span class="theme-to-classic">✎ 经典</span></button>
         </nav>
       </div>
     `;
