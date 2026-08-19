@@ -696,6 +696,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
 .dlg-pk .ds{color:#c9d5ff;}
 .dlg-pk .do{color:#ffd292;}
 .dlg-btns{gap:8px;}
+.help-dlg{max-width:640px!important;text-align:left!important;}
+.help-dlg h3{text-align:center;margin-bottom:8px;}
+.help-intro{text-align:center;color:var(--muted);font-size:.86em;line-height:1.7;margin-bottom:18px;}
+.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.help-step{padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:#0c1526;line-height:1.65;font-size:.84em;color:var(--muted);}
+.help-step strong{display:block;margin-bottom:4px;color:var(--text);font-size:1.04em;}
+.help-tip{margin-top:12px;padding:12px 14px;border:1px solid rgba(255,173,61,.25);border-radius:12px;background:rgba(255,173,61,.07);color:#ffd292;font-size:.82em;line-height:1.65;}
+.help-close{display:block;margin:18px auto 0;padding:10px 28px;border:0;border-radius:10px;background:var(--amber);color:#211400;font-weight:800;cursor:pointer;}
 .input-exam-name,
 .score-table input,
 #adminKeyInput{
@@ -828,6 +836,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
     .name-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
 }
 
+@media(max-width:620px){.help-grid{grid-template-columns:1fr;}}
+
 @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important;}
 }
@@ -848,6 +858,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
         <div class="security-tools">
             <span id="lockStatus"></span>
             <span id="adminStatus" style="display:none;">✅ 管理员模式</span>
+            <button id="helpBtn" onclick="showHelpDialog()">📖 使用说明</button>
             <button id="donateBtn" onclick="showDonationDialog()">💛 捐款</button>
             <button id="adminBtn" onclick="showAdminDialog()">🔑 管理员认证</button>
             <button id="lockBtn" onclick="toggleLock()" disabled title="只有管理员可以锁定页面">🔒 仅管理员可锁定</button>
@@ -1920,6 +1931,28 @@ function showDonationDialog(){
                 '<h3>支持 803 班级工具</h3>'+
                 '<p class="dlg-note" style="line-height:1.8">捐款功能暂未开放。感谢你愿意支持网站继续运行！</p>'+
                 '<div class="dlg-btns"><button class="btn btn-pri" onclick="closeDialog()">知道了</button></div>'+
+            '</div>'+
+        '</div>';
+}
+
+// 使用说明始终可以打开，页面锁定时也能查看。
+function showHelpDialog(){
+    var c = document.getElementById('dlgContainer');
+    c.innerHTML =
+        '<div class="dlg-overlay" onclick="if(event.target===this)closeDialog()">'+
+            '<div class="dlg-box help-dlg">'+
+                '<h3>📖 PK 擂台赛使用说明</h3>'+
+                '<p class="help-intro">普通同学可以查看和选择对决；保存考试、录入成绩和管理记录需要管理员权限。</p>'+
+                '<div class="help-grid">'+
+                    '<div class="help-step"><strong>1. 选择对决</strong>先点击自己的名字，再点击对手的名字，确认后就会加入本轮对决。可以继续添加多组。</div>'+
+                    '<div class="help-step"><strong>2. 封存本轮记录</strong>管理员认证后，点击“保存本轮记录”，输入考试名称，把本轮对决保存为一场考试。</div>'+
+                    '<div class="help-step"><strong>3. 开始 PK</strong>管理员在已封存考试中点击“开始 PK”，逐项填写成绩，也可以从表格直接粘贴。系统会自动计算总分和胜负。</div>'+
+                    '<div class="help-step"><strong>4. 查看成绩分析</strong>所有人都能点击“成绩分析”并输入姓名。同一场考试中，每位同学只会生成一次 AI 分析，之后任何人都能查看。</div>'+
+                    '<div class="help-step"><strong>5. 管理员功能</strong>管理员可以保存考试、录入成绩、删除封存记录和锁定页面。管理员认证会保存在当前设备上。</div>'+
+                    '<div class="help-step"><strong>6. 锁定页面</strong>只有管理员能锁定或解除锁定，状态会同步到其他设备。锁定后普通同学只能查看，管理员仍可操作。</div>'+
+                '</div>'+
+                '<div class="help-tip">按钮变灰时，请先看顶部是否显示“管理员模式”，以及页面是否已锁定。如果内容没有更新，可以刷新页面再试。</div>'+
+                '<button class="help-close" onclick="closeDialog()">知道了</button>'+
             '</div>'+
         '</div>';
 }
