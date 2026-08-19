@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070b14">
+  <title>Lernicks · 数字工具入口</title>
+  <script>
+    // 旧便签链接使用 #/ 开头。浏览器不会把 # 后面的内容发给服务器，
+    // 所以由主站在打开时原样转交给新的 note.lernicks.cn。
+    if(location.hash.startsWith('#/')){
+      location.replace('https://note.lernicks.cn/'+location.search+location.hash);
+    }
+  </script>
+  <style>
+    :root{--bg:#070b14;--panel:#101827;--line:rgba(170,191,225,.16);--text:#f5f8ff;--muted:#91a0b8;--note:#efbf8f;--image:#66e2ff;--class:#79efba}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;color:var(--text);font-family:"Microsoft YaHei",system-ui,sans-serif;background:radial-gradient(circle at 12% 5%,rgba(73,102,181,.2),transparent 32%),radial-gradient(circle at 88% 15%,rgba(45,167,173,.14),transparent 29%),var(--bg);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.3;background-image:linear-gradient(rgba(161,185,221,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(161,185,221,.025) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(#000,transparent 88%)}
+    .page{position:relative;width:min(1160px,calc(100% - 30px));margin:auto;padding:25px 0 42px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:12px}.mark{width:48px;height:48px;border:1px solid rgba(151,192,255,.28);border-radius:15px;display:grid;place-items:center;font-family:Consolas,monospace;font-size:19px;font-weight:900;color:#d9e8ff;background:linear-gradient(145deg,#17243a,#0b1220);box-shadow:0 0 30px rgba(85,142,225,.13)}.brand h1{font-size:20px;margin:0;letter-spacing:.02em}.brand p{font-size:10px;letter-spacing:.2em;color:var(--muted);margin:5px 0 0}.online{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;background:rgba(15,25,41,.62)}.online i{width:7px;height:7px;border-radius:50%;background:var(--class);box-shadow:0 0 10px var(--class)}
+    .hero{padding:clamp(76px,13vh,128px) 8px 55px;text-align:center}.eyebrow{font-size:11px;letter-spacing:.3em;font-weight:900;color:#8faef2}.hero h2{font-size:clamp(39px,8vw,78px);line-height:1.04;letter-spacing:-.045em;margin:17px 0}.hero h2 span{background:linear-gradient(100deg,#b8c9ff 5%,#71e9ff 50%,#a7f3ce);background-clip:text;-webkit-background-clip:text;color:transparent}.hero p{max-width:660px;margin:auto;color:var(--muted);font-size:clamp(14px,2vw,17px);line-height:1.85}
+    .sites{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{--accent:#fff;position:relative;min-height:330px;padding:25px;border:1px solid var(--line);border-radius:24px;color:var(--text);text-decoration:none;overflow:hidden;background:linear-gradient(150deg,rgba(20,31,49,.94),rgba(10,16,28,.93));box-shadow:0 20px 65px rgba(0,0,0,.26);transition:.28s}.card:before{content:"";position:absolute;width:230px;height:230px;right:-105px;bottom:-105px;border-radius:50%;background:var(--accent);opacity:.07;filter:blur(3px);transition:.3s}.card:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 1px rgba(255,255,255,.025);pointer-events:none}.card:hover{transform:translateY(-7px);border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 30px 80px rgba(0,0,0,.42)}.card:hover:before{transform:scale(1.2);opacity:.12}.card.note{--accent:var(--note)}.card.image{--accent:var(--image)}.card.class{--accent:var(--class)}.number{font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--accent)}.icon{width:68px;height:68px;margin:32px 0 23px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:20px;display:grid;place-items:center;color:var(--accent);font-size:29px;background:color-mix(in srgb,var(--accent) 7%,transparent);box-shadow:inset 0 0 32px color-mix(in srgb,var(--accent) 5%,transparent)}.card h3{font-size:27px;margin:0 0 10px}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.75}.enter{position:absolute;left:25px;right:25px;bottom:22px;display:flex;align-items:center;justify-content:space-between;color:var(--accent);font-size:13px;font-weight:900}.arrow{width:34px;height:34px;border:1px solid currentColor;border-radius:50%;display:grid;place-items:center;transition:.25s}.card:hover .arrow{transform:translateX(4px);color:#081019;background:var(--accent)}
+    .small-note{text-align:center;color:rgba(151,169,195,.5);font-size:12px;line-height:1.7;margin:26px auto 0}.small-note a{color:inherit}footer{display:flex;justify-content:space-between;gap:14px;margin-top:38px;padding:0 3px;color:rgba(151,169,195,.38);font-size:11px}
+    @media(max-width:840px){.sites{grid-template-columns:1fr}.card{min-height:255px}.icon{margin:24px 0 18px}.hero{padding:70px 6px 40px}}
+    @media(max-width:440px){.page{width:calc(100% - 18px)}.online span{display:none}.online{padding:9px}.brand p{display:none}.card{padding:21px}.enter{left:21px;right:21px}.hero h2{font-size:42px}footer{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand"><div class="mark">L.</div><div><h1>Lernicks</h1><p>DIGITAL TOOLBOX</p></div></div>
+      <div class="online"><i></i><span>服务正常运行</span></div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">ONE PLACE · THREE TOOLS</div>
+      <h2>去你想去的<br><span>数字空间</span></h2>
+      <p>便签、图片与班级工具的统一入口。选择一个方向，马上开始。</p>
+    </section>
+
+    <main class="sites">
+      <a class="card note" href="https://note.lernicks.cn">
+        <div class="number">01 · TELEGRAM NOTES</div><div class="icon">✎</div>
+        <h3>到笔记</h3><p>创建一张只属于你们的匿名便签，支持自动保存、密码保护与随时销毁。</p>
+        <div class="enter">打开便签电报 <span class="arrow">→</span></div>
+      </a>
+      <a class="card image" href="https://tbl.lernicks.cn">
+        <div class="number">02 · IMAGE HOSTING</div><div class="icon">▧</div>
+        <h3>到图床</h3><p>拖入或粘贴图片，快速生成可以分享的直链、Markdown 和 HTML 代码。</p>
+        <div class="enter">打开 Lernicks 图床 <span class="arrow">→</span></div>
+      </a>
+      <a class="card class" href="https://cla.lernicks.cn">
+        <div class="number">03 · CLASS CENTER</div><div class="icon">803</div>
+        <h3>到学校</h3><p>进入 803 班级数字中心，使用考试 PK 擂台赛和班级积分系统。</p>
+        <div class="enter">打开学校中心 <span class="arrow">→</span></div>
+      </a>
+    </main>
+
+    <p class="small-note">旧的便签链接会自动前往 <a href="https://note.lernicks.cn">note.lernicks.cn</a>，笔记内容不会因为迁移而改变。</p>
+    <footer><span>lernicks.cn · www.lernicks.cn</span><span>made for useful little things</span></footer>
+  </div>
+</body>
+</html>
+

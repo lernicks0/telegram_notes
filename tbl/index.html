@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07111e">
+  <title>Lernicks 图床</title>
+  <style>
+    :root{--bg:#06101c;--panel:#0c1b2d;--panel2:#10243a;--line:rgba(103,224,255,.2);--cyan:#67e0ff;--blue:#7694ff;--green:#70efba;--gold:#ffd06a;--red:#ff778d;--text:#f2fbff;--muted:#93aabb}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;color:var(--text);font-family:"Microsoft YaHei",system-ui,sans-serif;background:radial-gradient(circle at 15% 0%,rgba(41,142,194,.22),transparent 34%),radial-gradient(circle at 88% 12%,rgba(91,81,213,.2),transparent 30%),var(--bg);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.33;background-image:linear-gradient(rgba(103,224,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(103,224,255,.028) 1px,transparent 1px);background-size:36px 36px;mask-image:linear-gradient(#000,transparent 86%)}
+    button,input{font:inherit}.page{position:relative;width:min(1080px,calc(100% - 28px));margin:auto;padding:22px 0 50px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}.logo{width:49px;height:49px;border-radius:15px;display:grid;place-items:center;color:#04121c;font-size:24px;font-weight:1000;background:linear-gradient(145deg,var(--cyan),var(--green));box-shadow:0 0 32px rgba(103,224,255,.27)}.brand h1{font-size:20px;margin:0}.brand p{font-size:10px;letter-spacing:.19em;color:var(--muted);margin:5px 0 0}.home-link{padding:9px 13px;border:1px solid var(--line);border-radius:11px;color:var(--muted);text-decoration:none;font-size:13px;background:rgba(9,27,44,.65);transition:.2s}.home-link:hover{color:var(--text);border-color:rgba(103,224,255,.5)}
+    .hero{text-align:center;padding:62px 10px 34px}.eyebrow{font-size:11px;letter-spacing:.26em;color:var(--cyan);font-weight:900}.hero h2{font-size:clamp(36px,7vw,67px);margin:14px 0 14px;line-height:1.08;letter-spacing:-.035em}.hero h2 span{background:linear-gradient(100deg,var(--cyan),#b6f9dd 54%,#a4b5ff);background-clip:text;-webkit-background-clip:text;color:transparent}.hero p{max-width:610px;margin:auto;color:var(--muted);line-height:1.8;font-size:15px}
+    .workspace{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.65fr);gap:17px}.panel{border:1px solid var(--line);border-radius:23px;background:linear-gradient(150deg,rgba(15,37,59,.9),rgba(7,19,33,.88));box-shadow:0 24px 70px rgba(0,0,0,.28)}.upload-panel{padding:18px}.drop-zone{position:relative;min-height:355px;border:1.5px dashed rgba(103,224,255,.42);border-radius:18px;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;cursor:pointer;background:radial-gradient(circle at 50% 45%,rgba(103,224,255,.075),transparent 45%),rgba(5,17,30,.55);transition:.25s;overflow:hidden}.drop-zone:hover,.drop-zone.drag{border-color:var(--cyan);background-color:rgba(12,36,57,.78);box-shadow:inset 0 0 45px rgba(103,224,255,.07)}.drop-zone.busy{cursor:wait}.upload-icon{width:79px;height:79px;margin:0 auto 19px;border-radius:24px;display:grid;place-items:center;font-size:35px;color:#06131e;background:linear-gradient(145deg,var(--cyan),var(--green));box-shadow:0 0 44px rgba(103,224,255,.25)}.drop-zone h3{font-size:24px;margin:0 0 9px}.drop-zone p{margin:0;color:var(--muted);line-height:1.7;font-size:14px}.choose{display:inline-block;margin-top:20px;padding:10px 17px;border-radius:11px;color:#06131e;font-weight:900;background:var(--cyan)}#fileInput{display:none}
+    .preview{display:none;width:100%}.preview.show{display:block}.preview-image{display:block;max-width:100%;max-height:220px;margin:0 auto 15px;border-radius:13px;object-fit:contain;box-shadow:0 12px 35px rgba(0,0,0,.35)}.file-name{font-weight:800;overflow-wrap:anywhere}.file-meta{color:var(--muted);font-size:13px;margin:6px 0 17px}.preview-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);border-radius:11px;padding:10px 15px;color:var(--text);background:rgba(24,52,79,.65);cursor:pointer;transition:.2s}.btn:hover{transform:translateY(-1px);border-color:rgba(103,224,255,.54)}.btn.primary{border:0;color:#04151d;background:linear-gradient(135deg,var(--cyan),var(--green));font-weight:900}.btn.danger{color:#ffdce3;border-color:rgba(255,119,141,.3);background:rgba(110,31,49,.3)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.progress{display:none;height:8px;margin-top:16px;border-radius:99px;background:#071421;overflow:hidden}.progress.show{display:block}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .16s}
+    .side{display:grid;gap:14px;align-content:start}.info{padding:19px}.info h3{font-size:16px;margin:0 0 14px}.rule{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid rgba(103,224,255,.1)}.rule:first-of-type{border-top:0;padding-top:0}.rule-icon{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;background:rgba(103,224,255,.09);color:var(--cyan)}.rule strong{display:block;font-size:13px;margin-bottom:3px}.rule span{display:block;color:var(--muted);font-size:12px;line-height:1.55}.capacity{padding:18px}.capacity-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}.capacity-head span{color:var(--muted)}.meter{height:8px;margin:12px 0 8px;border-radius:99px;background:#06121f;overflow:hidden}.meter i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:.35s}.capacity small{color:var(--muted);line-height:1.5}
+    .result{display:none;margin-top:18px;padding:21px}.result.show{display:block}.result-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}.success{display:flex;align-items:center;gap:9px;font-weight:900;color:var(--green)}.success i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-style:normal;color:#072018;background:var(--green)}.result-preview{width:100%;max-height:300px;object-fit:contain;border-radius:14px;background:#071421;margin-bottom:16px}.copy-row{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:8px;margin-top:9px}.copy-row label{font-size:12px;color:var(--muted)}.copy-row input{min-width:0;width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#071625;outline:none;font-family:Consolas,monospace;font-size:12px}.copy-row button{padding:9px 12px;border:1px solid var(--line);border-radius:9px;color:var(--cyan);background:rgba(17,45,70,.7);cursor:pointer}.result-note{margin:15px 0 0;color:var(--muted);font-size:12px;line-height:1.65}.delete-line{display:flex;justify-content:flex-end;margin-top:14px}
+    .history{margin-top:18px;padding:21px}.history h3{font-size:17px;margin:0 0 4px}.history-sub{color:var(--muted);font-size:12px;margin-bottom:15px}.history-list{display:grid;gap:9px}.history-item{display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:11px;padding:10px;border:1px solid rgba(103,224,255,.12);border-radius:13px;background:rgba(7,22,37,.58)}.history-item img{width:54px;height:54px;border-radius:9px;object-fit:cover;background:#071421}.history-main{min-width:0}.history-main strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.history-main a{display:block;color:var(--cyan);font-size:11px;margin-top:5px;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.history-actions{display:flex;gap:6px}.history-actions button{padding:7px 9px;border:1px solid var(--line);border-radius:8px;color:var(--muted);background:transparent;cursor:pointer}.empty{padding:22px 8px;text-align:center;color:var(--muted);font-size:13px}
+    .toast{position:fixed;left:50%;bottom:25px;z-index:20;transform:translate(-50%,18px);padding:11px 16px;border-radius:11px;color:#06202a;font-weight:900;background:var(--cyan);opacity:0;pointer-events:none;transition:.25s;box-shadow:0 15px 45px rgba(0,0,0,.35)}.toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{color:#2a0710;background:var(--red)}footer{display:flex;justify-content:space-between;gap:12px;margin-top:26px;color:rgba(164,192,205,.43);font-size:11px;padding:0 3px}
+    @media(max-width:780px){.workspace{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.drop-zone{min-height:330px}.copy-row{grid-template-columns:1fr auto}.copy-row label{grid-column:1/-1}}
+    @media(max-width:520px){.page{width:calc(100% - 18px)}.hero{padding:48px 4px 27px}.hero p{font-size:13px}.side{grid-template-columns:1fr}.drop-zone{min-height:310px;padding:20px}.upload-panel{padding:10px}.result,.history{padding:16px}.copy-row{grid-template-columns:1fr}.copy-row label{grid-column:auto}.copy-row button{width:100%}.history-item{grid-template-columns:45px 1fr}.history-item img{width:45px;height:45px}.history-actions{grid-column:1/-1;justify-content:flex-end}.brand p{display:none}.home-link{font-size:0}.home-link:after{content:"⌂ 主站";font-size:13px}footer{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="/"><div class="logo">▧</div><div><h1>Lernicks 图床</h1><p>FAST IMAGE HOSTING</p></div></a>
+      <a class="home-link" href="https://lernicks.cn">返回 Lernicks 主站</a>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">DROP · PASTE · SHARE</div>
+      <h2>把图片变成<br><span>可以分享的链接</span></h2>
+      <p>拖入、选择或直接粘贴图片，几秒后得到直链。无需注册，所有人都可以使用。</p>
+    </section>
+
+    <main class="workspace">
+      <section class="panel upload-panel">
+        <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="选择图片上传">
+          <input id="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp">
+          <div id="emptyState">
+            <div class="upload-icon">↑</div>
+            <h3>把图片放到这里</h3>
+            <p>可以拖拽、点击选择，或按 Ctrl + V 粘贴<br>JPG / PNG / GIF / WebP · 最大 10MB</p>
+            <span class="choose">选择图片</span>
+          </div>
+          <div id="preview" class="preview">
+            <img id="previewImage" class="preview-image" alt="准备上传的图片">
+            <div id="fileName" class="file-name"></div>
+            <div id="fileMeta" class="file-meta"></div>
+            <div class="preview-actions">
+              <button id="changeButton" class="btn" type="button">重新选择</button>
+              <button id="uploadButton" class="btn primary" type="button">开始上传</button>
+            </div>
+            <div id="progress" class="progress"><div id="progressBar" class="progress-bar"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel info">
+          <h3>上传规则</h3>
+          <div class="rule"><div class="rule-icon">◇</div><div><strong>只接收真实图片</strong><span>服务器会检查图片内容，修改后缀不能伪装上传。</span></div></div>
+          <div class="rule"><div class="rule-icon">↻</div><div><strong>自动清理旧图片</strong><span>图床快到 3GB 时，从最早上传的图片开始删除。</span></div></div>
+          <div class="rule"><div class="rule-icon">!</div><div><strong>不要上传隐私内容</strong><span>知道链接的人都可能看到图片，图床也不保证永久保存。</span></div></div>
+        </section>
+        <section class="panel capacity">
+          <div class="capacity-head"><strong>图床容量</strong><span id="capacityText">正在读取…</span></div>
+          <div class="meter"><i id="capacityBar"></i></div>
+          <small id="capacityNote">总容量 3GB，空间不足时自动保护其他网站。</small>
+        </section>
+      </aside>
+    </main>
+
+    <section id="result" class="panel result">
+      <div class="result-head"><div class="success"><i>✓</i> 上传成功</div><button class="btn" type="button" onclick="resetUploader()">继续上传</button></div>
+      <img id="resultPreview" class="result-preview" alt="已上传图片">
+      <div class="copy-row"><label>图片直链</label><input id="directLink" readonly><button type="button" onclick="copyField('directLink')">复制</button></div>
+      <div class="copy-row"><label>Markdown</label><input id="markdownLink" readonly><button type="button" onclick="copyField('markdownLink')">复制</button></div>
+      <div class="copy-row"><label>HTML</label><input id="htmlLink" readonly><button type="button" onclick="copyField('htmlLink')">复制</button></div>
+      <div class="copy-row"><label>删除码</label><input id="deleteCode" readonly><button type="button" onclick="copyField('deleteCode')">复制</button></div>
+      <p class="result-note">请保存删除码。它相当于这张图片的“删除钥匙”，丢失后无法手动删除；达到容量上限时图片仍可能被自动清理。</p>
+      <div class="delete-line"><button id="deleteCurrent" class="btn danger" type="button">删除这张图片</button></div>
+    </section>
+
+    <section class="panel history">
+      <h3>本机最近上传</h3>
+      <div class="history-sub">记录只保存在当前浏览器，换设备后不会显示。</div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <footer><span>tbl.lernicks.cn · 自动清理型公共图床</span><span>请勿上传违法、侵权或含隐私的图片</span></footer>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const MAX_FILE_BYTES=10*1024*1024;
+    const HISTORY_KEY='lernicks_tbl_uploads_v1';
+    let selectedFile=null,previewObjectUrl='',uploading=false,currentUpload=null;
+    const dropZone=document.getElementById('dropZone');
+    const fileInput=document.getElementById('fileInput');
+
+    function formatBytes(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)return(bytes/1024).toFixed(1)+' KB';if(bytes<1024*1024*1024)return(bytes/1024/1024).toFixed(1)+' MB';return(bytes/1024/1024/1024).toFixed(2)+' GB'}
+    function markdownAlt(value){return String(value).replace(/[\\\[\]]/g,character=>'\\'+character)}
+    function htmlAttribute(value){return String(value).replace(/[&"<>]/g,character=>({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[character]))}
+    function toast(message,bad=false){const el=document.getElementById('toast');el.textContent=message;el.className='toast show'+(bad?' bad':'');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.className='toast',2400)}
+    function safeHistory(){try{const value=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(value)?value:[]}catch(_){return[]}}
+    function saveHistory(items){localStorage.setItem(HISTORY_KEY,JSON.stringify(items.slice(0,20)))}
+
+    dropZone.addEventListener('click',event=>{if(uploading)return;if(event.target.closest('button'))return;fileInput.click()});
+    dropZone.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!uploading){event.preventDefault();fileInput.click()}});
+    fileInput.addEventListener('change',()=>{if(fileInput.files[0])selectFile(fileInput.files[0])});
+    document.getElementById('changeButton').addEventListener('click',event=>{event.stopPropagation();if(!uploading)fileInput.click()});
+    document.getElementById('uploadButton').addEventListener('click',event=>{event.stopPropagation();uploadSelected()});
+    ['dragenter','dragover'].forEach(name=>dropZone.addEventListener(name,event=>{event.preventDefault();if(!uploading)dropZone.classList.add('drag')}));
+    ['dragleave','drop'].forEach(name=>dropZone.addEventListener(name,event=>{event.preventDefault();dropZone.classList.remove('drag')}));
+    dropZone.addEventListener('drop',event=>{if(!uploading&&event.dataTransfer.files[0])selectFile(event.dataTransfer.files[0])});
+    document.addEventListener('paste',event=>{if(uploading)return;const items=[...(event.clipboardData?.items||[])];const image=items.find(item=>item.kind==='file'&&item.type.startsWith('image/'));if(image){const file=image.getAsFile();if(file){event.preventDefault();selectFile(file);toast('已读取剪贴板图片')}}});
+
+    function selectFile(file){
+      if(!file||!file.type.startsWith('image/')){toast('请选择图片文件',true);return}
+      if(file.size>MAX_FILE_BYTES){toast('图片不能超过 10MB',true);return}
+      selectedFile=file;fileInput.value='';
+      if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl=URL.createObjectURL(file);
+      document.getElementById('previewImage').src=previewObjectUrl;
+      document.getElementById('fileName').textContent=file.name||'粘贴的图片';
+      document.getElementById('fileMeta').textContent=formatBytes(file.size)+' · '+(file.type||'等待服务器检查');
+      document.getElementById('emptyState').style.display='none';
+      document.getElementById('preview').classList.add('show');
+      document.getElementById('progress').classList.remove('show');
+      document.getElementById('progressBar').style.width='0';
+    }
+
+    function setUploading(value){uploading=value;dropZone.classList.toggle('busy',value);document.getElementById('uploadButton').disabled=value;document.getElementById('changeButton').disabled=value;document.getElementById('uploadButton').textContent=value?'正在上传…':'开始上传'}
+
+    function uploadSelected(){
+      if(!selectedFile||uploading)return;
+      setUploading(true);document.getElementById('progress').classList.add('show');
+      const form=new FormData();form.append('image',selectedFile,selectedFile.name||'pasted-image.png');
+      const xhr=new XMLHttpRequest();xhr.open('POST','/api/upload');
+      xhr.upload.onprogress=event=>{if(event.lengthComputable)document.getElementById('progressBar').style.width=Math.round(event.loaded/event.total*100)+'%'};
+      xhr.onload=()=>{setUploading(false);let data={};try{data=JSON.parse(xhr.responseText)}catch(_){data.message='服务器返回内容无法读取'}if(xhr.status>=200&&xhr.status<300&&data.ok){document.getElementById('progressBar').style.width='100%';showResult(data);loadStatus();toast('上传成功')}else toast(data.message||'上传失败',true)};
+      xhr.onerror=()=>{setUploading(false);toast('网络连接失败，请稍后重试',true)};
+      xhr.ontimeout=()=>{setUploading(false);toast('上传超时，请重试',true)};xhr.timeout=30000;xhr.send(form);
+    }
+
+    function showResult(data){
+      const direct=new URL(data.url,location.origin).href;
+      currentUpload={id:data.id,url:direct,deleteCode:data.deleteCode,name:data.originalName||selectedFile?.name||'image',createdAt:new Date().toISOString()};
+      document.getElementById('result').classList.add('show');document.getElementById('resultPreview').src=direct;
+      document.getElementById('directLink').value=direct;
+      document.getElementById('markdownLink').value=`![${markdownAlt(currentUpload.name)}](${direct})`;
+      document.getElementById('htmlLink').value=`<img src="${direct}" alt="${htmlAttribute(currentUpload.name)}">`;
+      document.getElementById('deleteCode').value=data.deleteCode;
+      document.getElementById('deleteCurrent').onclick=()=>deleteUpload(currentUpload);
+      const history=safeHistory().filter(item=>item.id!==currentUpload.id);history.unshift(currentUpload);saveHistory(history);renderHistory();
+      document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+
+    async function copyText(value){try{await navigator.clipboard.writeText(value)}catch(_){const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove()}toast('已复制')}
+    function copyField(id){copyText(document.getElementById(id).value)}
+    function resetUploader(){selectedFile=null;currentUpload=null;if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl='';document.getElementById('preview').classList.remove('show');document.getElementById('emptyState').style.display='block';document.getElementById('result').classList.remove('show');document.getElementById('progress').classList.remove('show');window.scrollTo({top:dropZone.offsetTop-20,behavior:'smooth'})}
+
+    async function deleteUpload(item){
+      if(!item||!confirm('确定删除这张图片吗？删除后链接会立即失效。'))return;
+      try{const response=await fetch('/api/images/'+encodeURIComponent(item.id),{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({deleteCode:item.deleteCode})});const data=await response.json();if(!response.ok)throw new Error(data.message||'删除失败');const history=safeHistory().filter(record=>record.id!==item.id);saveHistory(history);renderHistory();if(currentUpload&&currentUpload.id===item.id)resetUploader();loadStatus();toast('图片已删除')}catch(error){toast(error.message,true)}
+    }
+
+    function renderHistory(){
+      const list=document.getElementById('historyList'),items=safeHistory();list.innerHTML='';
+      if(!items.length){list.innerHTML='<div class="empty">还没有上传记录</div>';return}
+      items.forEach(item=>{const row=document.createElement('div');row.className='history-item';const img=document.createElement('img');img.src=item.url;img.alt='';const main=document.createElement('div');main.className='history-main';const name=document.createElement('strong');name.textContent=item.name||'图片';const link=document.createElement('a');link.href=item.url;link.target='_blank';link.rel='noopener';link.textContent=item.url;main.append(name,link);const actions=document.createElement('div');actions.className='history-actions';const copy=document.createElement('button');copy.textContent='复制';copy.onclick=()=>copyText(item.url);const del=document.createElement('button');del.textContent='删除';del.onclick=()=>deleteUpload(item);actions.append(copy,del);row.append(img,main,actions);list.append(row)})
+    }
+
+    async function loadStatus(){try{const response=await fetch('/api/status',{cache:'no-store'});const data=await response.json();if(!data.ok)return;const percent=Math.min(100,data.usedBytes/data.maxBytes*100);document.getElementById('capacityBar').style.width=percent+'%';document.getElementById('capacityText').textContent=formatBytes(data.usedBytes)+' / '+formatBytes(data.maxBytes);document.getElementById('capacityNote').textContent=`已保存 ${data.imageCount} 张图片；达到上限后自动删除最早图片。`}catch(_){document.getElementById('capacityText').textContent='暂时无法读取'}}
+
+    renderHistory();loadStatus();
+  </script>
+</body>
+</html>
