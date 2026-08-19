@@ -1,11 +1,17 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // 正式服务器默认使用 1145；本地测试可以用 PK_PORT 临时换端口。
 const PORT = Number(process.env.PK_PORT) || 1145;
-const DATA_FILE = path.join(__dirname, '803班擂台赛数据.json');
-const LOCK_FILE = path.join(__dirname, 'lock-state.json');
+const DATA_FILE = process.env.PK_DATA_FILE || path.join(__dirname, '803班擂台赛数据.json');
+const LOCK_FILE = process.env.PK_LOCK_FILE || path.join(__dirname, 'lock-state.json');
+const ANALYSIS_FILE = process.env.PK_ANALYSIS_FILE || path.join(__dirname, 'pk-analysis.json');
+const DEEPSEEK_BASE_URL = (process.env.DEEPSEEK_API_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, '');
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
+const analysisJobs = new Map();
+let analysisSaveChain = Promise.resolve();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -27,13 +33,210 @@ function serveFile(res, filePath) {
   });
 }
 
-const server = http.createServer((req, res) => {
+function sendJson(res, status, value) {
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  });
+  res.end(JSON.stringify(value));
+}
+
+function readBody(req, limit = 16 * 1024) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      if (Buffer.byteLength(body) > limit) reject(new Error('请求内容太大'));
+    });
+    req.on('end', () => {
+      try { resolve(body ? JSON.parse(body) : {}); }
+      catch (_) { reject(new Error('请求格式不正确')); }
+    });
+    req.on('error', reject);
+  });
+}
+
+function readPkData() {
+  try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
+  catch (_) { return { pkList: [], savedExams: [] }; }
+}
+
+function readAnalyses() {
+  try {
+    const value = JSON.parse(fs.readFileSync(ANALYSIS_FILE, 'utf8'));
+    return value && value.analyses ? value : { version: 1, analyses: {} };
+  } catch (_) {
+    return { version: 1, analyses: {} };
+  }
+}
+
+function saveAnalyses(value) {
+  return fs.promises.writeFile(ANALYSIS_FILE, JSON.stringify(value, null, 2), 'utf8');
+}
+
+function saveOneAnalysis(found, studentName, text) {
+  const job = analysisSaveChain.then(async () => {
+    const latest = readAnalyses();
+    if (!latest.analyses[found.key]) {
+      latest.analyses[found.key] = {
+        examName: found.exam.name || '未命名考试',
+        examTime: found.exam.time || '',
+        students: {},
+      };
+    }
+    if (!latest.analyses[found.key].students[studentName]) {
+      latest.analyses[found.key].students[studentName] = {
+        text,
+        createdAt: new Date().toISOString(),
+        model: DEEPSEEK_MODEL,
+      };
+      await saveAnalyses(latest);
+    }
+    return latest.analyses[found.key].students[studentName];
+  });
+  analysisSaveChain = job.catch(() => {});
+  return job;
+}
+
+function examKey(exam) {
+  const source = JSON.stringify({ name: exam.name || '', time: exam.time || '', records: exam.records || [] });
+  return crypto.createHash('sha256').update(source).digest('hex').slice(0, 32);
+}
+
+function findExamAndScores(examIndex, studentName) {
+  const data = readPkData();
+  const exam = Array.isArray(data.savedExams) ? data.savedExams[examIndex] : null;
+  if (!exam) throw Object.assign(new Error('找不到这场考试'), { status: 404 });
+  if (!exam.scoreData || !exam.scoreData[studentName]) {
+    throw Object.assign(new Error('这位同学在本场考试中还没有成绩，暂时不能分析'), { status: 400 });
+  }
+  const scores = exam.scoreData[studentName];
+  const cleanScores = {};
+  let total = 0;
+  for (const subject of ['语文', '数学', '英语', '科学', '文综']) {
+    const value = Number(scores[subject]);
+    cleanScores[subject] = Number.isFinite(value) ? value : 0;
+    total += cleanScores[subject];
+  }
+  return { exam, scores: cleanScores, total, key: examKey(exam) };
+}
+
+function getCachedAnalysis(exam, key, studentName) {
+  const store = readAnalyses();
+  const examItem = store.analyses[key];
+  const item = examItem && examItem.students && examItem.students[studentName];
+  return item ? { item, store } : { item: null, store };
+}
+
+async function requestDeepSeek(scores, total) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw Object.assign(new Error('服务器还没有设置 DeepSeek API Key，请联系管理员'), { status: 503 });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  let response;
+  try {
+    response = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        stream: false,
+        max_tokens: 700,
+        thinking: { type: 'disabled' },
+        messages: [
+          {
+            role: 'system',
+            content: '你是一位耐心、积极的初中学习顾问。请用七年级学生容易理解的简体中文分析成绩。不要猜测姓名、性别、班级排名或家庭情况。按“成绩观察”“可以保持”“下一步建议”三个小标题回答，建议要具体、友善、简洁。',
+          },
+          {
+            role: 'user',
+            content: `请分析下面这一位匿名学生的一次考试成绩。只根据分数分析，不要询问或猜测真实姓名。\n各科分数：${JSON.stringify(scores)}\n总分：${total}`,
+          },
+        ],
+      }),
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  let result;
+  try { result = await response.json(); }
+  catch (_) { result = {}; }
+  if (!response.ok) {
+    const message = result.error && result.error.message ? result.error.message : `DeepSeek 请求失败（${response.status}）`;
+    throw Object.assign(new Error(message), { status: 502 });
+  }
+  const text = result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content;
+  if (!text) throw Object.assign(new Error('DeepSeek 没有返回分析内容，请稍后重试'), { status: 502 });
+  return String(text).trim();
+}
+
+async function createAnalysis(examIndex, studentName) {
+  const found = findExamAndScores(examIndex, studentName);
+  const cached = getCachedAnalysis(found.exam, found.key, studentName);
+  if (cached.item) return { cached: true, analysis: cached.item };
+
+  const text = await requestDeepSeek(found.scores, found.total);
+  const saved = await saveOneAnalysis(found, studentName, text);
+  return { cached: false, analysis: saved };
+}
+
+const server = http.createServer(async (req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  const url = req.url.split('?')[0];
+  const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const url = requestUrl.pathname;
+
+  // 查询已经生成过的个人成绩分析。所有同学都可以查看，包括查看他人的分析。
+  if (url === '/analysis.json' && req.method === 'GET') {
+    try {
+      const examIndex = Number(requestUrl.searchParams.get('examIndex'));
+      const studentName = String(requestUrl.searchParams.get('studentName') || '').trim();
+      if (!Number.isInteger(examIndex) || !studentName) {
+        sendJson(res, 400, { ok: false, message: '请选择考试并输入姓名' });
+        return;
+      }
+      const found = findExamAndScores(examIndex, studentName);
+      const cached = getCachedAnalysis(found.exam, found.key, studentName);
+      sendJson(res, 200, { ok: true, cached: !!cached.item, analysis: cached.item });
+    } catch (error) {
+      sendJson(res, error.status || 500, { ok: false, message: error.message || '查询失败' });
+    }
+    return;
+  }
+
+  // 第一次点击分析时才调用 DeepSeek；同一场考试、同一位同学以后直接读缓存。
+  if (url === '/analyze.json' && req.method === 'POST') {
+    try {
+      const body = await readBody(req);
+      const examIndex = Number(body.examIndex);
+      const studentName = String(body.studentName || '').trim();
+      if (!Number.isInteger(examIndex) || !studentName) {
+        sendJson(res, 400, { ok: false, message: '请选择考试并输入姓名' });
+        return;
+      }
+      const found = findExamAndScores(examIndex, studentName);
+      const jobKey = `${found.key}:${studentName}`;
+      if (!analysisJobs.has(jobKey)) {
+        const job = createAnalysis(examIndex, studentName).finally(() => analysisJobs.delete(jobKey));
+        analysisJobs.set(jobKey, job);
+      }
+      const result = await analysisJobs.get(jobKey);
+      sendJson(res, 200, { ok: true, ...result });
+    } catch (error) {
+      const message = error.name === 'AbortError' ? 'DeepSeek 响应超时，请稍后再试' : (error.message || '分析失败');
+      sendJson(res, error.status || 500, { ok: false, message });
+    }
+    return;
+  }
 
   // 所有设备共用的页面锁定状态
   if (url === '/lock-state.json' && req.method === 'GET') {

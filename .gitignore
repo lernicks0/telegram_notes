@@ -1,3 +1,7 @@
 node_modules/
 data/
 .env
+pk/803班擂台赛数据.json
+pk/pk-analysis.json
+pk/lock-state.json
+sco/sco-data.json

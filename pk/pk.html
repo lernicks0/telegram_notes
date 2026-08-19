@@ -651,6 +651,21 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
     font-size:0.82em;
 }
 .btn-pk{border-radius:9px;font-size:0.78em;padding:7px 13px;}
+.btn-analysis{
+    border:1px solid rgba(89,220,255,.32);border-radius:9px;padding:7px 13px;
+    background:rgba(33,116,150,.16);color:#8feaff;font-size:.78em;font-weight:700;
+    cursor:pointer;transition:all .2s ease;white-space:nowrap;
+}
+.btn-analysis:hover{transform:translateY(-1px);border-color:#59dcff;background:rgba(33,116,150,.28);}
+.btn-analysis:disabled{cursor:not-allowed;opacity:.42;transform:none;}
+.analysis-dlg{max-width:620px!important;text-align:left!important;}
+.analysis-controls{display:grid;grid-template-columns:1fr auto;gap:8px;margin:14px 0;}
+.analysis-name-input{width:100%;padding:11px 13px;border:1px solid var(--border-light);border-radius:9px;background:#0b1628;color:var(--text);outline:none;}
+.analysis-name-input:focus{border-color:#59dcff;box-shadow:0 0 0 3px rgba(89,220,255,.1);}
+.analysis-result{min-height:115px;max-height:48vh;overflow-y:auto;padding:16px;border:1px solid var(--border);border-radius:12px;background:rgba(5,12,24,.58);color:#dce8ff;line-height:1.8;white-space:pre-wrap;font-size:.92em;}
+.analysis-note{display:flex;gap:8px;align-items:flex-start;margin:12px 0;color:var(--muted-2);font-size:.78em;line-height:1.6;}
+.analysis-generate{margin-top:12px;width:100%;}
+.analysis-tag{display:inline-block;margin-bottom:9px;padding:4px 8px;border-radius:99px;background:rgba(77,214,159,.1);color:var(--green);font-size:.72em;}
 .win-section{border-color:rgba(77,214,159,.24);background:rgba(15,32,37,.82);}
 .win-section .pk-item.win,.score-result-box .pk-item.win{
     background:rgba(77,214,159,.08);border-color:rgba(77,214,159,.24);color:var(--green);
@@ -836,6 +851,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{
         <div class="security-tools">
             <span id="lockStatus"></span>
             <span id="adminStatus" style="display:none;">✅ 管理员模式</span>
+            <button id="donateBtn" onclick="showDonationDialog()">💛 捐款</button>
             <button id="adminBtn" onclick="showAdminDialog()">🔑 管理员认证</button>
             <button id="lockBtn" onclick="toggleLock()" disabled title="只有管理员可以锁定页面">🔒 仅管理员可锁定</button>
         </div>
@@ -1221,6 +1237,16 @@ function updateDeletePermissionUI(){
     }
 }
 
+function updateAnalysisPermissionUI(){
+    var buttons = document.querySelectorAll('.btn-analysis');
+    for(var i=0;i<buttons.length;i++){
+        var hasScores = buttons[i].getAttribute('data-ready') === '1';
+        var canUse = hasScores && (!isLocked || isAdmin);
+        buttons[i].disabled = !canUse;
+        buttons[i].title = hasScores ? (canUse ? '查看或首次生成个人成绩分析' : '页面锁定时普通用户不能操作') : '录入成绩后才能分析';
+    }
+}
+
 function openSaveDialog(){
     if(!isAdmin){
         toast('只有管理员可以保存本轮记录', 'warn');
@@ -1286,6 +1312,7 @@ function renderSaved(){
                 '<span class="saved-exam-time">'+exam.time+'</span>'+
                 '<span class="saved-exam-count">'+exam.records.length+' 组对决</span>'+
                 '<button class="btn-pk" onclick="openScoreDialog('+i+')" disabled title="只有管理员可以开始PK">⚔️ 开始PK</button>'+
+                '<button class="btn-analysis" data-ready="'+(exam.scoreData?'1':'0')+'" onclick="openAnalysisDialog('+i+')">🧠 成绩分析</button>'+
                 '<button class="saved-del" onclick="delSavedExam('+i+')" disabled title="只有管理员可以删除封存记录">✕</button>'+
             '</div>';
 
@@ -1323,6 +1350,7 @@ function renderSaved(){
     content.innerHTML = h;
     updatePkActionPermissionUI();
     updateDeletePermissionUI();
+    updateAnalysisPermissionUI();
 
     // 刷新获胜区
     renderWinSection();
@@ -1788,6 +1816,116 @@ async function loadSharedLockState(){
     }
 }
 
+// ============ 个人成绩分析 ============
+// 所有人都能查看；同一场考试的同一位同学只会真正调用一次 AI。
+var analysisExamIndex = -1;
+
+function openAnalysisDialog(examIdx){
+    var exam = savedExams[examIdx];
+    if(!exam || !exam.scoreData){ toast('这场考试还没有录入成绩，暂时不能分析', 'warn'); return; }
+    analysisExamIndex = examIdx;
+    var names = Object.keys(exam.scoreData).sort(function(a,b){ return a.localeCompare(b, 'zh-CN'); });
+    var options = '';
+    for(var i=0;i<names.length;i++) options += '<option value="'+names[i]+'"></option>';
+    var c = document.getElementById('dlgContainer');
+    c.innerHTML =
+        '<div class="dlg-overlay" onclick="if(event.target===this)closeDialog()">'+
+            '<div class="dlg-box analysis-dlg">'+
+                '<h3>🧠 个人成绩分析</h3>'+
+                '<p class="dlg-note">考试：'+exam.name+'。输入本场考试中的任意同学姓名，可以查看已经保存的分析。</p>'+
+                '<div class="analysis-controls">'+
+                    '<input id="analysisName" class="analysis-name-input" list="analysisNames" placeholder="输入姓名" autocomplete="off" onkeydown="if(event.key===\'Enter\')lookupAnalysis()">'+
+                    '<datalist id="analysisNames">'+options+'</datalist>'+
+                    '<button class="btn btn-pri" onclick="lookupAnalysis()">查看分析</button>'+
+                '</div>'+
+                '<div class="analysis-note"><span>🛡️</span><span>保护隐私：服务器会用姓名找到分数，但只把匿名的各科分数发给 DeepSeek，不会把真实姓名发给 AI。</span></div>'+
+                '<div id="analysisTag"></div>'+
+                '<div id="analysisResult" class="analysis-result">请先输入姓名，再点击“查看分析”。</div>'+
+                '<button id="analysisGenerate" class="btn btn-pri analysis-generate" style="display:none" onclick="generateAnalysis()">✨ 首次生成分析（本场每人仅一次）</button>'+
+                '<div class="dlg-btns" style="margin-top:15px"><button class="btn btn-gray" onclick="closeDialog()">关闭</button></div>'+
+            '</div>'+
+        '</div>';
+    setTimeout(function(){ var input=document.getElementById('analysisName'); if(input) input.focus(); }, 40);
+}
+
+function currentAnalysisName(){
+    var input = document.getElementById('analysisName');
+    var name = input ? input.value.trim() : '';
+    var exam = savedExams[analysisExamIndex];
+    if(!name || !exam || !exam.scoreData || !exam.scoreData[name]){
+        toast('请输入本场考试中完整、正确的姓名', 'warn');
+        return '';
+    }
+    return name;
+}
+
+async function analysisRequest(url, options){
+    var res = await fetch(url, options);
+    var data;
+    try{ data = await res.json(); }catch(e){ data = {message:'服务器返回的数据无法读取'}; }
+    if(!res.ok) throw new Error(data.message || '分析请求失败');
+    return data;
+}
+
+async function lookupAnalysis(){
+    var name = currentAnalysisName();
+    if(!name) return;
+    var box = document.getElementById('analysisResult');
+    var tag = document.getElementById('analysisTag');
+    var button = document.getElementById('analysisGenerate');
+    box.textContent = '正在查找已经保存的分析…'; tag.innerHTML = ''; button.style.display = 'none';
+    try{
+        var data = await analysisRequest('/analysis.json?examIndex='+analysisExamIndex+'&studentName='+encodeURIComponent(name));
+        if(data.cached && data.analysis){
+            showAnalysisResult(data.analysis);
+        }else{
+            box.textContent = '这位同学还没有生成过本场考试的分析。点击下面按钮后会调用一次 DeepSeek，并把结果保存下来，之后任何人查看都不会再次调用。';
+            button.style.display = 'block';
+        }
+    }catch(error){ box.textContent = error.message; toast(error.message, 'warn'); }
+}
+
+async function generateAnalysis(){
+    var name = currentAnalysisName();
+    if(!name) return;
+    var box = document.getElementById('analysisResult');
+    var button = document.getElementById('analysisGenerate');
+    button.disabled = true; button.textContent = 'AI 正在分析，请稍等…';
+    box.textContent = 'DeepSeek 正在阅读匿名分数并整理建议，通常需要几秒钟。请不要关闭窗口。';
+    try{
+        var data = await analysisRequest('/analyze.json', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({examIndex:analysisExamIndex, studentName:name})
+        });
+        showAnalysisResult(data.analysis);
+        toast(data.cached ? '已读取保存过的分析' : '分析完成并已保存', 'ok');
+    }catch(error){
+        box.textContent = error.message;
+        button.disabled = false; button.textContent = '重新尝试首次生成';
+        toast(error.message, 'warn');
+    }
+}
+
+function showAnalysisResult(item){
+    document.getElementById('analysisTag').innerHTML = '<span class="analysis-tag">✓ 已保存 · 以后查看不再调用 AI</span>';
+    document.getElementById('analysisResult').textContent = item.text || '暂无分析内容';
+    var button = document.getElementById('analysisGenerate');
+    button.style.display = 'none'; button.disabled = false;
+}
+
+function showDonationDialog(){
+    var c = document.getElementById('dlgContainer');
+    c.innerHTML =
+        '<div class="dlg-overlay" onclick="if(event.target===this)closeDialog()">'+
+            '<div class="dlg-box">'+
+                '<div style="font-size:2.4em;margin-bottom:10px">💛</div>'+
+                '<h3>支持 803 班级工具</h3>'+
+                '<p class="dlg-note" style="line-height:1.8">捐款功能暂未开放。感谢你愿意支持网站继续运行！</p>'+
+                '<div class="dlg-btns"><button class="btn btn-pri" onclick="closeDialog()">知道了</button></div>'+
+            '</div>'+
+        '</div>';
+}
+
 async function saveSharedLockState(nextLocked){
     var res = await fetch(LOCK_STATE_URL, {
         method:'POST',
@@ -1870,7 +2008,7 @@ async function toggleLock(){
 function applyLockUI(){
     var lockBtn = document.getElementById('lockBtn');
     var status = document.getElementById('lockStatus');
-    var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-import, .btn-export-win, .btn-paste, .pk-del, .saved-del, #lockBtn');
+    var allBtns = document.querySelectorAll('.name-btn, .go-btn, .icon-btn, .btn, .btn-pri, .btn-danger, .btn-gray, .btn-save, .btn-pk, .btn-analysis, .btn-import, .btn-export-win, .btn-paste, .pk-del, .saved-del, #donateBtn, #lockBtn');
     
     if(isLocked && !isAdmin){
         status.textContent = '⛔ 页面已锁定';
@@ -1909,6 +2047,7 @@ function applyLockUI(){
     updateSavePermissionUI();
     updatePkActionPermissionUI();
     updateDeletePermissionUI();
+    updateAnalysisPermissionUI();
 }
 
 function showAdminDialog(){
