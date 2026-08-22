@@ -222,7 +222,10 @@ function cleanTitle(value) {
 }
 
 function cleanFormat(value) {
-  return value === 'latex' ? 'latex' : 'markdown';
+  // mixed 是新的统一模式：Markdown 正文中直接使用 LaTeX 公式。
+  // 保留旧的 markdown / latex 值，这样以前的文档仍然能按原方式打开。
+  if (value === 'latex' || value === 'markdown') return value;
+  return 'mixed';
 }
 
 function validateContent(value) {
