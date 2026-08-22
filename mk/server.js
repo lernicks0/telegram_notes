@@ -144,12 +144,13 @@ setInterval(() => {
   cleanupOldestDocuments();
 }, 60 * 1000).unref();
 
-function securityHeaders(res) {
+function securityHeaders(res, allowEmbedding = false) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  if (!allowEmbedding) res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  const frameAncestors = allowEmbedding ? '*' : "'none'";
+  res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' https: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors ${frameAncestors}`);
 }
 
 function sendJson(res, status, data) {
@@ -384,10 +385,14 @@ async function deleteDocument(req, res, record) {
 }
 
 const server = http.createServer((req, res) => {
-  securityHeaders(res);
   let url;
   try { url = new URL(req.url, `http://${req.headers.host || 'localhost'}`); }
-  catch (_) { sendText(res, 400, 'Bad Request'); return; }
+  catch (_) { securityHeaders(res); sendText(res, 400, 'Bad Request'); return; }
+
+  // 普通阅读页可以放进预览框；带 /pre 的编辑页继续禁止内嵌。
+  const isPublicDocumentView = (req.method === 'GET' || req.method === 'HEAD')
+    && /^\/d\/[a-f0-9]{16}\/?$/.test(url.pathname);
+  securityHeaders(res, isPublicDocumentView);
 
   if ((req.method === 'GET' || req.method === 'HEAD') && (url.pathname === '/' || url.pathname === '/index.html')) {
     serveHtml(req, res, INDEX_FILE);
