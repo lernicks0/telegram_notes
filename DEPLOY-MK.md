@@ -42,12 +42,10 @@ pm2 save
 
 ## Nginx 与 Cloudflare
 
-仓库中的 `deploy/nginx-lernicks.conf` 已增加 `mk.lernicks.cn`。先备份当前配置，再更新：
+使用独立的 `deploy/nginx-mk.conf`，不会覆盖其他网站的 Nginx 配置：
 
 ```bash
-NGINX_TARGET="$(readlink -f /etc/nginx/sites-enabled/default)"
-cp -a "$NGINX_TARGET" "/root/nginx-default-before-mk-$(date +%Y%m%d-%H%M%S).bak"
-cp -a /root/telegram-notes/deploy/nginx-lernicks.conf "$NGINX_TARGET"
+cp -a /root/telegram-notes/deploy/nginx-mk.conf /etc/nginx/sites-enabled/mk-site
 nginx -t
 systemctl reload nginx
 ```
@@ -66,4 +64,3 @@ curl -s http://127.0.0.1:1150/api/status
 curl -s -o /dev/null -w "MK NGINX: %{http_code}\n" -H "Host: mk.lernicks.cn" http://127.0.0.1/
 pm2 logs mk-server --lines 20 --nostream
 ```
-
