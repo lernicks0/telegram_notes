@@ -3,7 +3,7 @@
 ## 功能与端口
 
 - Markdown / LaTeX 文档分享站
-- 端口：1150
+- 端口：1151（1150 已被申请登记网站使用）
 - PM2 名称：`mk-server`
 - 运行目录：`/root/mk`
 - 文档正文：`/root/mk/documents/`
@@ -59,8 +59,8 @@ mk -> 124.223.201.40
 ## 检查
 
 ```bash
-curl -s -o /dev/null -w "MK PORT: %{http_code}\n" http://127.0.0.1:1150/
-curl -s http://127.0.0.1:1150/api/status
+curl -s -o /dev/null -w "MK PORT: %{http_code}\n" http://127.0.0.1:1151/
+curl -s http://127.0.0.1:1151/api/status
 curl -s -o /dev/null -w "MK NGINX: %{http_code}\n" -H "Host: mk.lernicks.cn" http://127.0.0.1/
 pm2 logs mk-server --lines 20 --nostream
 ```

@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = Number(process.env.MK_PORT) || 1150;
+const PORT = Number(process.env.MK_PORT) || 1151;
 const ROOT_DIR = __dirname;
 const INDEX_FILE = path.join(ROOT_DIR, 'index.html');
 const DOCUMENT_PAGE = path.join(ROOT_DIR, 'document.html');
@@ -477,4 +477,3 @@ server.listen(PORT, () => {
   console.log(`Lernicks 文档站已启动: http://localhost:${PORT}`);
   console.log(`单份上限: ${Math.round(MAX_DOCUMENT_BYTES / MB)}MB，总容量: ${Math.round(MAX_STORAGE_BYTES / MB)}MB`);
 });
-
