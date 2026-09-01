@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "accounts": [
+    { "id": "1", "name": "学生姓名示例一", "role": "student" },
+    { "id": "2", "name": "学生姓名示例二", "role": "student-admin" },
+    { "id": "ls", "name": "老师", "role": "teacher" }
+  ]
+}
