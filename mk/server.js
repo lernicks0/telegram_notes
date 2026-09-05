@@ -1,10 +1,11 @@
-// Lernicks Markdown / LaTeX 文档分享站
+// Lernicks Markdown / LaTeX / HTML 文档分享站
 // 纯 Node.js 实现，不需要在服务器安装新的 npm 软件包。
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { resolveFormat } = require('./html-support');
 
 const PORT = Number(process.env.MK_PORT) || 1151;
 const ROOT_DIR = __dirname;
@@ -221,11 +222,10 @@ function cleanTitle(value) {
     .slice(0, 120) || '未命名文档';
 }
 
-function cleanFormat(value) {
+function cleanFormat(value, content) {
   // mixed 是新的统一模式：Markdown 正文中直接使用 LaTeX 公式。
   // 保留旧的 markdown / latex 值，这样以前的文档仍然能按原方式打开。
-  if (value === 'latex' || value === 'markdown') return value;
-  return 'mixed';
+  return resolveFormat(value, content);
 }
 
 function validateContent(value) {
@@ -284,7 +284,7 @@ async function createDocument(req, res) {
     const record = {
       id,
       title: cleanTitle(body.title),
-      format: cleanFormat(body.format),
+      format: cleanFormat(body.format, content),
       size,
       createdAt: now,
       updatedAt: now,
@@ -356,7 +356,7 @@ async function updateDocument(req, res, record) {
     fs.writeFileSync(temporary, content);
     fs.renameSync(temporary, documentPath(record.id));
     record.title = cleanTitle(body.title);
-    record.format = cleanFormat(body.format);
+    record.format = cleanFormat(body.format === undefined ? record.format : body.format, content);
     record.size = size;
     record.updatedAt = new Date().toISOString();
     saveMetadata();
@@ -396,6 +396,13 @@ const server = http.createServer((req, res) => {
   const isPublicDocumentView = (req.method === 'GET' || req.method === 'HEAD')
     && /^\/d\/[a-f0-9]{16}\/?$/.test(url.pathname);
   securityHeaders(res, isPublicDocumentView);
+
+  if ((req.method === 'GET' || req.method === 'HEAD') && url.pathname === '/html-support.js') {
+    const body = fs.readFileSync(path.join(ROOT_DIR, 'html-support.js'));
+    res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Content-Length': body.length, 'Cache-Control': 'no-cache' });
+    res.end(req.method === 'HEAD' ? undefined : body);
+    return;
+  }
 
   if ((req.method === 'GET' || req.method === 'HEAD') && (url.pathname === '/' || url.pathname === '/index.html')) {
     serveHtml(req, res, INDEX_FILE);
@@ -460,7 +467,7 @@ const server = http.createServer((req, res) => {
     if (!record) { sendText(res, 404, '文档不存在或已被自动清理'); return; }
     try {
       const content = fs.readFileSync(documentPath(record.id), 'utf8');
-      const extension = record.format === 'latex' ? 'tex' : 'md';
+      const extension = record.format === 'html' ? 'html' : record.format === 'latex' ? 'tex' : 'md';
       const body = Buffer.from(content);
       res.writeHead(200, {
         'Content-Type': 'text/plain; charset=utf-8',

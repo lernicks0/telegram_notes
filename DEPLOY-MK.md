@@ -2,7 +2,10 @@
 
 ## 功能与端口
 
-- Markdown + LaTeX 混合文档分享站，写法类似洛谷编辑器。
+- Markdown + LaTeX 混合文档与 HTML 网页分享站，写法类似洛谷编辑器。
+- 上传 `.html` / `.htm` 文件或粘贴 HTML，可自动识别，也可手动选择 HTML 网页格式。
+- HTML 在隔离框架中预览，保留页面样式和内联脚本；支持 jsDelivr 上的脚本、样式和字体。不会自动上传 HTML 引用的本地图片、CSS 或 JS 文件，建议内嵌这些资源。
+- HTML 脚本不能读取编辑页密钥或访问父页面；不支持联网请求、表单提交、新窗口或嵌套页面。
 - 行内公式使用 `$...$`，独立公式使用 `$$...$$`。
 - `/pre` 编辑页支持“编辑 / 实时预览”切换。
 - 保留旧 Markdown 和纯 LaTeX 文档的阅读兼容。
@@ -28,7 +31,7 @@ cd /root/telegram-notes
 git pull --ff-only origin master
 
 mkdir -p /root/mk/data /root/mk/documents
-cp -a mk/index.html mk/document.html mk/server.js /root/mk/
+cp -a mk/index.html mk/document.html mk/server.js mk/html-support.js /root/mk/
 
 pm2 start /root/mk/server.js --name mk-server --cwd /root/mk
 pm2 save
@@ -42,6 +45,27 @@ pm2 save
 ```
 
 不要删除 `/root/mk/data` 或 `/root/mk/documents`。
+
+## HTML 支持更新包（2026-09-05）
+
+本地更新包：`deploy/releases/mk-html-support-20260905.tar.gz`。只包含 `index.html`、`document.html`、`server.js`、`html-support.js`，不含文档、密钥或文档记录。必须同时更新这四个文件。
+
+将更新包上传至服务器 `/root/mk-html-support-20260905.tar.gz` 后执行：
+
+```bash
+backup_dir=$(mktemp -d /root/mk-code-backup-XXXXXXXX)
+cp -a /root/mk/index.html /root/mk/document.html /root/mk/server.js "$backup_dir/"
+if [ -f /root/mk/html-support.js ]; then cp -a /root/mk/html-support.js "$backup_dir/"; fi
+tar -xzf /root/mk-html-support-20260905.tar.gz -C /root/mk
+node --check /root/mk/server.js
+node --check /root/mk/html-support.js
+pm2 restart mk-server
+curl -fsS http://127.0.0.1:1151/api/status
+```
+
+已有 HTML 内容如果之前保存为混合格式，可以在 `/pre` 编辑页选择“HTML 网页”并保存，阅读链接保持不变。
+
+本地验证：`node tests/mk-html.integration.js`。设置 `MK_PLAYWRIGHT_MODULE` 为 Playwright 模块路径时，还会使用无界面 Edge 验证上传、预览、脚本隔离、阅读与编辑流程。
 
 ## Nginx 与 Cloudflare
 
